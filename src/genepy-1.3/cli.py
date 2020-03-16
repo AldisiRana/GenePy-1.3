@@ -3,6 +3,7 @@
 import os
 
 import click
+import numpy as np
 import pandas as pd
 
 from .cross_annotate_cadd import cross_annotate_cadd
@@ -58,7 +59,5 @@ def get_genepy(
         if gene_df.empty:
             click.echo("Error! Gene not found!")
             continue
-        gene_df = gene_df.replace(to_replace='0/0+', value=0, regex=True)
-        gene_df = gene_df.replace(to_replace='0/[123456789]+', value=1, regex=True)
-        gene_df = gene_df.replace(to_replace='[123456789]/[123456789]', value=2, regex=True)
-        gene_df = gene_df.replace(to_replace='\./\.[\S]*', value=0, regex=True)
+
+        # To be continued ...
