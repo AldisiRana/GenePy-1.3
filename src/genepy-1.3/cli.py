@@ -1,0 +1,64 @@
+# -*- coding: utf-8 -*-
+
+import os
+
+import click
+import pandas as pd
+
+from .cross_annotate_cadd import cross_annotate_cadd
+
+@click.group()
+def main():
+    """Handle genepy functions."""
+
+
+@main.command()
+@click.option('--vcf-file', required=True, help='')
+@click.option('--annovar-ready-file', required=True, help='')
+@click.option('--annotated-file', required=True, help='')
+@click.option('--caddout-file', required=True, help='')
+@click.option('--output-path', required=True, help='')
+def cross_annotate(
+    *,
+    vcf_file,
+    annovar_ready_file,
+    annotated_file,
+    caddout_file,
+    output_path
+):
+    a1 = pd.read_csv(annovar_ready_file, sep='\t', index_col=False, header=None)
+    geneanno = a1.drop(a1.columns[:17], axis=1)
+    b1 = pd.read_csv(vcf_file, sep='\t', index_col=False, skiprows=6)
+    b1 = b1.drop(b1.columns[:9], axis=1)
+    geneanno.columns = list(b1.columns)
+    freqanno = pd.read_csv(annotated_file, sep='\t', index_col=False, usecols=[0, 1, 3, 4, 5, 6, 10])
+    cadd_df = pd.read_csv(caddout_file, sep='\t', skiprows=1, index_col=False)
+    raw_scores = cross_annotate_cadd(freq_df=freqanno, cadd_df=cadd_df)
+    caddanno = pd.DataFrame(raw_scores, columns=['CADD15_RAW'])
+    final_df = pd.concat([freqanno, caddanno, geneanno], axis=1)
+    final_df.to_csv(output_path, index=False, sep='\t')
+    return final_df
+
+
+@click.option('--genepy-meta', required=True, help='')
+@click.option('--output-dir', required=True, help='')
+@click.option('--gene-list', required=True, help='')
+def get_genepy(
+    *,
+    genepy_meta,
+    output_dir,
+    gene_list,
+):
+    os.mkdir(output_dir)
+    meta_data = pd.read_csv(genepy_meta, sep='\t', index_col=False)
+    with open(gene_list) as file:
+        genes = list(file)
+    for gene in genes:
+        gene_df = meta_data.loc[meta_data['Gene.refGene'] == gene]
+        if gene_df.empty:
+            click.echo("Error! Gene not found!")
+            continue
+        gene_df = gene_df.replace(to_replace='0/0+', value=0, regex=True)
+        gene_df = gene_df.replace(to_replace='0/[123456789]+', value=1, regex=True)
+        gene_df = gene_df.replace(to_replace='[123456789]/[123456789]', value=2, regex=True)
+        gene_df = gene_df.replace(to_replace='\./\.[\S]*', value=0, regex=True)
