@@ -26,10 +26,7 @@ def cross_annotate_cadd(
     return scores
 
 
-def calculate_genepy(
-    *,
-    gene_df,
-):
+def calculate_genepy(gene_df):
     gene_df = gene_df.replace(to_replace='0/0+', value=0, regex=True)
     gene_df = gene_df.replace(to_replace='0/[123456789]+', value=1, regex=True)
     gene_df = gene_df.replace(to_replace='[123456789]/[123456789]', value=2, regex=True)
@@ -41,3 +38,4 @@ def calculate_genepy(
     known_fa_all[known_fa_all == '.'] = np.nan
     known_fa_all = known_fa_all.astype('float')
     # To be continued ...
+    return

@@ -6,7 +6,7 @@ import click
 import numpy as np
 import pandas as pd
 
-from .cross_annotate_cadd import cross_annotate_cadd
+from .utils import cross_annotate_cadd, calculate_genepy
 
 @click.group()
 def main():
@@ -59,5 +59,5 @@ def get_genepy(
         if gene_df.empty:
             click.echo("Error! Gene not found!")
             continue
-
+        scores_df = calculate_genepy(gene_df)
         # To be continued ...
