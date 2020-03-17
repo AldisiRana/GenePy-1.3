@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 
 import click
 import numpy as np
@@ -30,6 +31,7 @@ def cross_annotate_cadd(
 
 
 def calculate_genepy(gene_df, score_col):
+
     gene_df = gene_df.replace(to_replace='0/0+', value=0, regex=True)
     gene_df = gene_df.replace(to_replace='0/[123456789]+', value=1, regex=True)
     gene_df = gene_df.replace(to_replace='[123456789]/[123456789]', value=2, regex=True)
@@ -80,3 +82,19 @@ def score_db(gene, samples, score, freq):
     U = np.vstack((samples_header, out1)).T
 
     return U
+
+
+def chunks(genes, x):
+    for i in range(0, len(genes), x):
+        yield genes[i:i+x]
+
+
+def run_parallel(meta_data, score_col, output_dir, genes):
+    for gene in genes:
+        gene_df = meta_data.loc[meta_data['Gene.refGene'] == gene]
+        if gene_df.empty:
+            click.echo("Error! Gene not found!")
+            continue
+        scores_matrix = calculate_genepy(gene_df, score_col)
+        path = os.path.join(output_dir, gene+'_'+score_col+'_matrix')
+        np.savetxt(path, scores_matrix, fmt='%s', delimiter='\t')

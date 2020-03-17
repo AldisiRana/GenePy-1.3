@@ -5,8 +5,11 @@ import os
 import click
 import numpy as np
 import pandas as pd
+from multiprocessing import Pool
+from functools import partial
 
-from .utils import cross_annotate_cadd, calculate_genepy
+from .utils import cross_annotate_cadd, calculate_genepy, chunks, run_parallel
+
 
 @click.group()
 def main():
@@ -56,11 +59,11 @@ def get_genepy(
     meta_data = pd.read_csv(genepy_meta, sep='\t', index_col=False)
     with open(gene_list) as file:
         genes = list(file)
-    for gene in genes:
-        gene_df = meta_data.loc[meta_data['Gene.refGene'] == gene]
-        if gene_df.empty:
-            click.echo("Error! Gene not found!")
-            continue
-        scores_matrix = calculate_genepy(gene_df, score_col)
-        path = os.path.join(output_dir, gene+'_'+score_col+'_matrix')
-        np.savetxt(path, scores_matrix, fmt='%s', delimiter='\t')
+    gene_chunks = list(chunks(genes, 400))
+    pool = Pool(processes=5)
+    func = partial(run_parallel, meta_data, score_col, output_dir)
+    pool.map(func, gene_chunks)
+    return "Scores are ready in " + output_dir
+
+
+
