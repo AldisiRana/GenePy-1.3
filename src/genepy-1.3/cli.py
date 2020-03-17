@@ -64,6 +64,3 @@ def get_genepy(
     func = partial(run_parallel, meta_data, score_col, output_dir)
     pool.map(func, gene_chunks)
     return "Scores are ready in " + output_dir
-
-
-
