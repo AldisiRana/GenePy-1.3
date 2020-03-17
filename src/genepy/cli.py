@@ -44,6 +44,7 @@ def cross_annotate(
     return final_df
 
 
+@main.command()
 @click.option('--genepy-meta', required=True, help='')
 @click.option('--output-dir', required=True, help='')
 @click.option('--gene-list', required=True, help='')
