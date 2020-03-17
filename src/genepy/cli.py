@@ -30,6 +30,7 @@ def cross_annotate(
     caddout_file,
     output_path
 ):
+    click.echo("Reading input files...")
     a1 = pd.read_csv(annovar_ready_file, sep='\t', index_col=False, header=None)
     geneanno = a1.drop(a1.columns[:17], axis=1)
     b1 = pd.read_csv(vcf_file, sep='\t', index_col=False, skiprows=6)
@@ -37,10 +38,12 @@ def cross_annotate(
     geneanno.columns = list(b1.columns)
     freqanno = pd.read_csv(annotated_file, sep='\t', index_col=False, usecols=[0, 1, 3, 4, 5, 6, 10])
     cadd_df = pd.read_csv(caddout_file, sep='\t', skiprows=1, index_col=False)
+    click.echo("Combine Genotypes and annotations")
     raw_scores = cross_annotate_cadd(freq_df=freqanno, cadd_df=cadd_df)
     caddanno = pd.DataFrame(raw_scores, columns=['CADD15_RAW'])
     final_df = pd.concat([freqanno, caddanno, geneanno], axis=1)
     final_df.to_csv(output_path, index=False, sep='\t')
+    click.echo("Process is done.")
     return final_df
 
 
