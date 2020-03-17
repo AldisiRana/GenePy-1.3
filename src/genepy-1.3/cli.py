@@ -44,11 +44,13 @@ def cross_annotate(
 @click.option('--genepy-meta', required=True, help='')
 @click.option('--output-dir', required=True, help='')
 @click.option('--gene-list', required=True, help='')
+@click.option('--score-col', required=True, help='')
 def get_genepy(
     *,
     genepy_meta,
     output_dir,
     gene_list,
+    score_col,
 ):
     os.mkdir(output_dir)
     meta_data = pd.read_csv(genepy_meta, sep='\t', index_col=False)
@@ -59,5 +61,6 @@ def get_genepy(
         if gene_df.empty:
             click.echo("Error! Gene not found!")
             continue
-        scores_df = calculate_genepy(gene_df)
-        # To be continued ...
+        scores_matrix = calculate_genepy(gene_df, score_col)
+        path = os.path.join(output_dir, gene+'_'+score_col+'_matrix')
+        np.savetxt(path, scores_matrix, fmt='%s', delimiter='\t')
