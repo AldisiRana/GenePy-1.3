@@ -3,10 +3,7 @@ import os
 
 import click
 import numpy as np
-import pandas as pd
 import re
-
-from .make_scores_mat_6 import score_db
 
 
 def cross_annotate_cadd(
