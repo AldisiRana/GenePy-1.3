@@ -30,17 +30,22 @@ def cross_annotate(
     caddout_file,
     output_path
 ):
-    click.echo("Reading input files...")
-    a1 = pd.read_csv(annovar_ready_file, sep='\t', index_col=False, header=None)
-    geneanno = a1.drop(a1.columns[:17], axis=1)
-    b1 = pd.read_csv(vcf_file, sep='\t', index_col=False, skiprows=6)
-    b1 = b1.drop(b1.columns[:9], axis=1)
-    geneanno.columns = list(b1.columns)
+    click.echo("Reading annotated file ...")
     freqanno = pd.read_csv(annotated_file, sep='\t', index_col=False, usecols=[0, 1, 3, 4, 5, 6, 10])
+    click.echo("Reading caddout file ...")
     cadd_df = pd.read_csv(caddout_file, sep='\t', skiprows=1, index_col=False)
     click.echo("Combine Genotypes and annotations")
     raw_scores = cross_annotate_cadd(freq_df=freqanno, cadd_df=cadd_df)
     caddanno = pd.DataFrame(raw_scores, columns=['CADD15_RAW'])
+    click.echo("Reading vcf file ...")
+    b1 = pd.read_csv(vcf_file, sep='\t', index_col=False, skiprows=6)
+    b1 = b1.drop(b1.columns[:9], axis=1)
+    click.echo("Reading annovar input file ...")
+    a1 = pd.read_csv(annovar_ready_file, sep='\t', index_col=False, header=None,
+                     usecols=range(17, len(b1.columns) + 17))
+    geneanno = a1.drop(a1.columns[:17], axis=1)
+    geneanno.columns = list(b1.columns)
+    click.echo("Merging all files ...")
     final_df = pd.concat([freqanno, caddanno, geneanno], axis=1)
     final_df.to_csv(output_path, index=False, sep='\t')
     click.echo("Process is done.")
@@ -60,11 +65,15 @@ def get_genepy(
     score_col,
 ):
     os.mkdir(output_dir)
-    meta_data = pd.read_csv(genepy_meta, sep='\t', index_col=False)
+    click.echo('Reading input dataframe ... ')
+    meta_data = pd.read_csv(genepy_meta, sep='\t', index_col=False, chucksize=1000000)
+    df = pd.concat(meta_data)
+    click.echo('Processing gene list ... ')
     with open(gene_list) as file:
         genes = list(file)
     gene_chunks = list(chunks(genes, 400))
+    click.echo('Calculating genepy scores ... ')
     pool = Pool(processes=5)
-    func = partial(run_parallel, meta_data, score_col, output_dir)
+    func = partial(run_parallel, df, score_col, output_dir)
     pool.map(func, gene_chunks)
     return "Scores are ready in " + output_dir
