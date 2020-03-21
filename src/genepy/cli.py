@@ -66,7 +66,7 @@ def get_genepy(
 ):
     os.mkdir(output_dir)
     click.echo('Reading input dataframe ... ')
-    meta_data = pd.read_csv(genepy_meta, sep='\t', index_col=False, chucksize=1000000)
+    meta_data = pd.read_csv(genepy_meta, sep='\t', index_col=False, chunksize=1000000)
     df = pd.concat(meta_data)
     click.echo('Processing gene list ... ')
     with open(gene_list) as file:
