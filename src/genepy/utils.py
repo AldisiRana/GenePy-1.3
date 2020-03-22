@@ -101,4 +101,4 @@ def run_parallel(header, meta_data, score_col, output_dir, genes):
         scores_matrix = calculate_genepy(gene_df, score_col)
         path = os.path.join(output_dir, gene+'_'+score_col+'_matrix')
         np.savetxt(path, scores_matrix, fmt='%s', delimiter='\t')
-        p = subprocess.Popen('rm', gene+'.tmp1', gene+'.meta')
+        p = subprocess.call(['rm', gene+'.meta'])
