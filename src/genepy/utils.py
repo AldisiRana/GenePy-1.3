@@ -90,8 +90,8 @@ def chunks(genes, x):
 
 def run_parallel(meta_data, score_col, output_dir, genes):
     for gene in genes:
-        p = subprocess.Popen(['grep', '-E', '\W$'+gene+';?\s', meta_data, '>', gene+'.tmp1'])
-        p = subprocess.Popen(['cat', 'header', gene+'.tmp1', '>', gene+'.meta'])
+        p = subprocess.Popen(['grep', '-E', '\W$'+gene+';?\s', meta_data, '>'+gene+'.tmp1'])
+        p = subprocess.Popen(['cat', 'header', gene+'.tmp1', '>'+gene+'.meta'])
         gene_df = pd.read_csv(gene+'.meta', sep='\t', index_col=False)
         if gene_df.empty:
             click.echo("Error! Gene not found!")
