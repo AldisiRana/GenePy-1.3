@@ -39,7 +39,7 @@ def calculate_genepy(gene_df, score_col):
     scores[scores == '.'] = np.nan
     scores = scores.astype('float')
     scores = (scores - (-7.535037))/(35.788538-(-7.535037))
-    known_fa_all = np.array(gene_df.filter(regex='exome_ALL'))
+    known_fa_all = np.array(gene_df.filter('AF'))
     known_fa_all[known_fa_all == '.'] = np.nan
     known_fa_all = known_fa_all.astype('float')
     freqs = np.zeros((gene_df.shape[0], 2))
@@ -90,9 +90,10 @@ def chunks(genes, x):
 
 def run_parallel(header, meta_data, score_col, output_dir, genes):
     for gene in genes:
-        p = subprocess.call(['cp', header, gene+'.meta'])
-        with open(gene+'.meta', 'a+') as file:
-            p = subprocess.call('grep -E "\W'+gene+';?\s" '+meta_data, stdout=file, shell=True)
+        if not os.path.isfile(gene+'.meta'):
+            p = subprocess.call(['cp', header, gene+'.meta'])
+            with open(gene+'.meta', 'a+') as file:
+                p = subprocess.call('grep -E "\W'+gene+';?\s" '+meta_data, stdout=file, shell=True)
         gene_df = pd.read_csv(gene+'.meta', sep='\t', index_col=False)
         if gene_df.empty:
             click.echo("Error! Gene not found!")
