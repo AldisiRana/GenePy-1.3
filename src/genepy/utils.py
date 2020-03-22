@@ -88,10 +88,11 @@ def chunks(genes, x):
         yield genes[i:i+x]
 
 
-def run_parallel(meta_data, score_col, output_dir, genes):
+def run_parallel(header, meta_data, score_col, output_dir, genes):
     for gene in genes:
-        p = subprocess.Popen(['grep', '-E', '\W$'+gene+';?\s', meta_data, '>'+gene+'.tmp1'])
-        p = subprocess.Popen(['cat', 'header', gene+'.tmp1', '>'+gene+'.meta'])
+        p = subprocess.call(['cp', header, gene+'.meta'])
+        with open(gene+'.meta', 'a+') as file:
+            p = subprocess.call('grep -E "\W'+gene+';?\s" '+meta_data, stdout=file, shell=True)
         gene_df = pd.read_csv(gene+'.meta', sep='\t', index_col=False)
         if gene_df.empty:
             click.echo("Error! Gene not found!")

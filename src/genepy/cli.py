@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import os
+import subprocess
 
 import click
-import numpy as np
 import pandas as pd
 from multiprocessing import Pool
 from functools import partial
@@ -57,13 +57,17 @@ def cross_annotate(
 @click.option('--output-dir', required=True, help='')
 @click.option('--gene-list', required=True, help='')
 @click.option('--score-col', required=True, help='')
+@click.option('--header', default=None)
 def get_genepy(
     *,
     genepy_meta,
     output_dir,
     gene_list,
     score_col,
+    header,
 ):
+    if header is None:
+        p = subprocess.call('grep "^Chr" '+genepy_meta+'> header', shell=True)
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
     # click.echo('Reading input dataframe ... ')
@@ -75,6 +79,6 @@ def get_genepy(
     gene_chunks = list(chunks(genes, 400))
     click.echo('Calculating genepy scores ... ')
     pool = Pool(processes=5)
-    func = partial(run_parallel, genepy_meta, score_col, output_dir)
+    func = partial(run_parallel, header, genepy_meta, score_col, output_dir)
     pool.map(func, gene_chunks)
     return "Scores are ready in " + output_dir
