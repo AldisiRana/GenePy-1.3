@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 import os
+import subprocess
 
 import click
 import numpy as np
+import pandas as pd
 import re
 
 
@@ -88,10 +90,13 @@ def chunks(genes, x):
 
 def run_parallel(meta_data, score_col, output_dir, genes):
     for gene in genes:
-        gene_df = meta_data.loc[meta_data['Gene.refGene'] == gene]
+        p = subprocess.Popen(['grep', '-E', '\W$'+gene+';?\s', meta_data, '>', gene+'.tmp1'])
+        p = subprocess.Popen(['cat', 'header', gene+'.tmp1', '>', gene+'.meta'])
+        gene_df = pd.read_csv(gene+'.meta', sep='\t', index_col=False)
         if gene_df.empty:
             click.echo("Error! Gene not found!")
             continue
         scores_matrix = calculate_genepy(gene_df, score_col)
         path = os.path.join(output_dir, gene+'_'+score_col+'_matrix')
         np.savetxt(path, scores_matrix, fmt='%s', delimiter='\t')
+        p = subprocess.Popen('rm', gene+'.tmp1', gene+'.meta')

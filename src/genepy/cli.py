@@ -65,15 +65,15 @@ def get_genepy(
     score_col,
 ):
     os.mkdir(output_dir)
-    click.echo('Reading input dataframe ... ')
-    meta_data = pd.read_csv(genepy_meta, sep='\t', index_col=False, chunksize=1000000)
-    df = pd.concat(meta_data)
+    # click.echo('Reading input dataframe ... ')
+    # meta_data = pd.read_csv(genepy_meta, sep='\t', index_col=False, chunksize=1000000)
+    # df = pd.concat(meta_data)
     click.echo('Processing gene list ... ')
     with open(gene_list) as file:
         genes = list(file)
     gene_chunks = list(chunks(genes, 400))
     click.echo('Calculating genepy scores ... ')
     pool = Pool(processes=5)
-    func = partial(run_parallel, df, score_col, output_dir)
+    func = partial(run_parallel, genepy_meta, score_col, output_dir)
     pool.map(func, gene_chunks)
     return "Scores are ready in " + output_dir
