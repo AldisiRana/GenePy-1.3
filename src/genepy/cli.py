@@ -67,6 +67,7 @@ def get_genepy(
     header,
 ):
     if header is None:
+        click.echo('Creating header file ... ')
         p = subprocess.call('grep "^Chr" '+genepy_meta+'> header', shell=True)
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
