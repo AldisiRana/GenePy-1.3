@@ -58,7 +58,7 @@ def calculate_genepy(gene_df, score_col):
     return matrix
 
 
-def score_db(gene, samples, score, freq):
+def score_db(samples, score, freq):
     # first make copies of the score and samples into S and db1, respectively
     samples_header = samples.columns
     S = np.copy(score)
