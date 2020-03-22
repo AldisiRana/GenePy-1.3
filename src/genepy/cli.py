@@ -64,13 +64,14 @@ def get_genepy(
     gene_list,
     score_col,
 ):
-    os.mkdir(output_dir)
+    if not os.path.isdir():
+        os.mkdir(output_dir)
     # click.echo('Reading input dataframe ... ')
     # meta_data = pd.read_csv(genepy_meta, sep='\t', index_col=False, chunksize=1000000)
     # df = pd.concat(meta_data)
     click.echo('Processing gene list ... ')
     with open(gene_list) as file:
-        genes = list(file)
+        genes = [line.rstrip('\n') for line in file]
     gene_chunks = list(chunks(genes, 400))
     click.echo('Calculating genepy scores ... ')
     pool = Pool(processes=5)
