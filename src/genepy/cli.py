@@ -64,7 +64,7 @@ def get_genepy(
     gene_list,
     score_col,
 ):
-    if not os.path.isdir():
+    if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
     # click.echo('Reading input dataframe ... ')
     # meta_data = pd.read_csv(genepy_meta, sep='\t', index_col=False, chunksize=1000000)
