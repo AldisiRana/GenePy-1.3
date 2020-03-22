@@ -39,7 +39,7 @@ def calculate_genepy(gene_df, score_col):
     scores[scores == '.'] = np.nan
     scores = scores.astype('float')
     scores = (scores - (-7.535037))/(35.788538-(-7.535037))
-    known_fa_all = np.array(gene_df.filter('AF'))
+    known_fa_all = np.array(gene_df['AF'])
     known_fa_all[known_fa_all == '.'] = np.nan
     known_fa_all = known_fa_all.astype('float')
     freqs = np.zeros((gene_df.shape[0], 2))
