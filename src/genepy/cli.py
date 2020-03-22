@@ -2,12 +2,12 @@
 
 import os
 import subprocess
+from contextlib import contextmanager
 
 import click
 import pandas as pd
 from multiprocessing import Pool
 from functools import partial
-from contextlib import contextmanager
 
 from .utils import cross_annotate_cadd, calculate_genepy, chunks, run_parallel
 
@@ -80,9 +80,9 @@ def get_genepy(
         genes = [line.rstrip('\n') for line in file]
     gene_chunks = list(chunks(genes, 400))
     click.echo('Calculating genepy scores ... ')
+    func = partial(run_parallel, header, genepy_meta, score_col, output_dir)
     with poolcontext(processes=5) as pool:
-        results = pool.map(partial(run_parallel, header=header, meta_data=genepy_meta, score_col=score_col,
-                                   output_dir=output_dir), gene_chunks)
+        results = pool.map(func, gene_chunks)
     return "Scores are ready in " + output_dir
 
 
@@ -91,3 +91,4 @@ def poolcontext(*args, **kwargs):
     pool = Pool(*args, **kwargs)
     yield pool
     pool.terminate()
+
