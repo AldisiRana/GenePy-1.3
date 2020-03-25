@@ -90,6 +90,8 @@ def chunks(genes, x):
 
 def run_parallel(header, meta_data, score_col, output_dir, genes):
     for gene in genes:
+        if os.path.isfile(os.path.join(output_dir, gene+'_'+score_col+'_matrix')):
+            continue
         if not os.path.isfile(gene+'.meta'):
             p = subprocess.call(['cp', header, gene+'.meta'])
             with open(gene+'.meta', 'a+') as file:

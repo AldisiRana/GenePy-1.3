@@ -59,6 +59,8 @@ def cross_annotate(
 @click.option('--gene-list', required=True, help='')
 @click.option('--score-col', required=True, help='')
 @click.option('--header', default=None)
+@click.option('--processes', default=5)
+@click.option('--chunk-size', default=400)
 def get_genepy(
     *,
     genepy_meta,
@@ -66,6 +68,8 @@ def get_genepy(
     gene_list,
     score_col,
     header,
+    processes,
+    chunk_size,
 ):
     if header is None:
         click.echo('Creating header file ... ')
@@ -78,10 +82,10 @@ def get_genepy(
     click.echo('Processing gene list ... ')
     with open(gene_list) as file:
         genes = [line.rstrip('\n') for line in file]
-    gene_chunks = list(chunks(genes, 400))
+    gene_chunks = list(chunks(genes, chunk_size))
     click.echo('Calculating genepy scores ... ')
     func = partial(run_parallel, header, genepy_meta, score_col, output_dir)
-    with poolcontext(processes=5) as pool:
+    with poolcontext(processes=processes) as pool:
         results = pool.map(func, gene_chunks)
     return "Scores are ready in " + output_dir
 
