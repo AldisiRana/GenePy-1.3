@@ -19,11 +19,11 @@ def main():
 
 
 @main.command()
-@click.option('--vcf-file', required=True, help='')
-@click.option('--annovar-ready-file', required=True, help='')
-@click.option('--annotated-file', required=True, help='')
-@click.option('--caddout-file', required=True, help='')
-@click.option('--output-path', required=True, help='')
+@click.option('--vcf-file', required=True, help='the filtered vcf file.')
+@click.option('--annovar-ready-file', required=True, help='the annover prepared file.')
+@click.option('--annotated-file', required=True, help='the file with annotations.')
+@click.option('--caddout-file', required=True, help='the output file from CADD.')
+@click.option('--output-path', required=True, help='the path for the output file.')
 def cross_annotate(
     *,
     vcf_file,
@@ -55,13 +55,13 @@ def cross_annotate(
 
 
 @main.command()
-@click.option('--genepy-meta', required=True, help='')
-@click.option('--output-dir', required=True, help='')
-@click.option('--gene-list', required=True, help='')
-@click.option('--score-col', required=True, help='')
-@click.option('--header', default=None)
-@click.option('--processes', default=5)
-@click.option('--chunk-size', default=400)
+@click.option('--genepy-meta', required=True, help='The meta file with all variants and samples')
+@click.option('--output-dir', required=True, help='the directory path for all scores')
+@click.option('--gene-list', required=True, help='a list of all the genes to score')
+@click.option('--score-col', required=True, help='the name of the score column in genepy meta.')
+@click.option('--header', default=None, help='The file containing the header')
+@click.option('--processes', default=5, help='Number of processes to run in parallel.')
+@click.option('--chunk-size', default=400, help='the size of the chunk to split the genes.')
 def get_genepy(
     *,
     genepy_meta,
@@ -72,6 +72,18 @@ def get_genepy(
     processes,
     chunk_size,
 ):
+    """
+    Caluclate genepy scores of genes across the samples.
+
+    :param genepy_meta: The meta file with all variants and samples
+    :param output_dir: the directory path for all scores
+    :param gene_list: a list of all the genes to score
+    :param score_col: the name of the score column in genepy meta.
+    :param header: the file containing the header
+    :param processes: Number of processes to run in parallel.
+    :param chunk_size: the size of the chunk to split the genes.
+    :return:
+    """
     if header is None:
         click.echo('Creating header file ... ')
         p = subprocess.call('grep "^Chr" '+genepy_meta+'> header', shell=True)
