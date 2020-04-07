@@ -194,7 +194,7 @@ def find_pvalue(
     :return: dataframe with genes and their p_values
     """
     scores_df = pd.read_csv(scores_file, sep='\t', index_col=False)
-    genotype_df = pd.read_csv(genotype_file, sep='\t', index_col=False)
+    genotype_df = pd.read_csv(genotype_file, sep=' ', index_col=False)
     merged_df = pd.merge(genotype_df, scores_df, on='patient_id', how='left')
     df_by_cases = merged_df.groupby(cases_column)
     cases = list(df_by_cases.groups.keys())
