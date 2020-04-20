@@ -204,9 +204,10 @@ def find_pvalue(
     for gene in tqdm(genes, desc='Calculating p_values for genes'):
         case_0 = df_by_cases.get_group(cases[0])[gene].tolist()
         case_1 = df_by_cases.get_group(cases[1])[gene].tolist()
-        if case_0.sort() == case_1.sort():
+        try:
+            u_statistic, p_val = stats.mannwhitneyu(case_0, case_1)
+        except:
             continue
-        u_statistic, p_val = stats.mannwhitneyu(case_0, case_1)
         p_values.append([gene, u_statistic, p_val])
     p_values_df = pd.DataFrame(p_values, columns=['genes', 'u_statistic', 'p_value']).sort_values(by=['p_value'])
     p_values_df.to_csv(output_file, sep='\t', index=False)
