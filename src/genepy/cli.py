@@ -146,6 +146,8 @@ def normalize(
 @click.option('-o', '--output-file', required=True, help="The path to output the pvalues of genes.")
 @click.option('-g', '--genes',
               help="a list containing the genes to calculate. if not provided all genes will be used.")
+@click.option('-t', '--test', required=True, type=click.Choice(['ttest_ind', 'mannwhitneyu']),
+              help='statistical test for calculating P value.')
 @click.option('-c', '--cases-column', required=True, help="the name of the column that contains the case/control type.")
 def calculate_pval(
     *,
@@ -154,6 +156,7 @@ def calculate_pval(
     output_file,
     genes,
     cases_column,
+    test,
 ):
     click.echo("The process for calculating the p_values will start now.")
     df = find_pvalue(
@@ -162,6 +165,7 @@ def calculate_pval(
         genotype_file=genotype_file,
         genes=genes,
         cases_column=cases_column,
+        test=test,
     )
     click.echo('Process is complete.')
     click.echo(df.info())

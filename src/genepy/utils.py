@@ -183,6 +183,7 @@ def find_pvalue(
     output_file,
     genes=None,
     cases_column,
+    test='mannwhitneyu',
 ):
     """
     Calculate the significance of a gene in a population using Mann-Whitney-U test.
@@ -201,14 +202,24 @@ def find_pvalue(
     p_values = []
     if genes is None:
         genes = scores_df.columns.tolist()[1:]
-    for gene in tqdm(genes, desc='Calculating p_values for genes'):
-        case_0 = df_by_cases.get_group(cases[0])[gene].tolist()
-        case_1 = df_by_cases.get_group(cases[1])[gene].tolist()
-        try:
-            u_statistic, p_val = stats.mannwhitneyu(case_0, case_1)
-        except:
-            continue
-        p_values.append([gene, u_statistic, p_val])
-    p_values_df = pd.DataFrame(p_values, columns=['genes', 'u_statistic', 'p_value']).sort_values(by=['p_value'])
+    if test == 'mannwhitneyu':
+        for gene in tqdm(genes, desc='Calculating p_values for genes'):
+            case_0 = df_by_cases.get_group(cases[0])[gene].tolist()
+            case_1 = df_by_cases.get_group(cases[1])[gene].tolist()
+            try:
+                u_statistic, p_val = stats.mannwhitneyu(case_0, case_1)
+            except:
+                continue
+            p_values.append([gene, u_statistic, p_val])
+    elif test == 'ttest_ind':
+        for gene in tqdm(genes, desc='Calculating p_values for genes'):
+            case_0 = df_by_cases.get_group(cases[0])[gene].tolist()
+            case_1 = df_by_cases.get_group(cases[1])[gene].tolist()
+            try:
+                statistic, p_val = stats.ttest_ind(case_0, case_1)
+            except:
+                continue
+            p_values.append([gene, statistic, p_val])
+    p_values_df = pd.DataFrame(p_values, columns=['genes', 'statistic', 'p_value']).sort_values(by=['p_value'])
     p_values_df.to_csv(output_file, sep='\t', index=False)
     return p_values_df
