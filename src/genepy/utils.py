@@ -29,7 +29,7 @@ def cross_annotate_cadd(
         except:
             scores[val] = 'NaN'
             print('Fail to annotate ' + str(val))
-    return scores
+    return scores.values()
 
 
 def calculate_genepy(gene_df, score_col):

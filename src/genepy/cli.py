@@ -40,12 +40,11 @@ def cross_annotate(
     raw_scores = cross_annotate_cadd(freq_df=freqanno, cadd_df=cadd_df)
     caddanno = pd.DataFrame(raw_scores, columns=['CADD15_RAW'])
     click.echo("Reading vcf file ...")
-    b1 = pd.read_csv(vcf_file, sep='\t', index_col=False, skiprows=6)
+    b1 = pd.read_csv(vcf_file, sep='\t', index_col=False, skiprows=34)
     b1 = b1.drop(b1.columns[:9], axis=1)
     click.echo("Reading annovar input file ...")
-    a1 = pd.read_csv(annovar_ready_file, sep='\t', index_col=False, header=None,
+    geneanno = pd.read_csv(annovar_ready_file, sep='\t', index_col=False, header=None,
                      usecols=range(17, len(b1.columns) + 17))
-    geneanno = a1.drop(a1.columns[:17], axis=1)
     geneanno.columns = list(b1.columns)
     click.echo("Merging all files ...")
     final_df = pd.concat([freqanno, caddanno, geneanno], axis=1)
@@ -87,6 +86,7 @@ def get_genepy(
     if header is None:
         click.echo('Creating header file ... ')
         p = subprocess.call('grep "^Chr" '+genepy_meta+'> header', shell=True)
+	header = 'header'
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
     # click.echo('Reading input dataframe ... ')
@@ -99,7 +99,7 @@ def get_genepy(
     click.echo('Calculating genepy scores ... ')
     func = partial(run_parallel, header, genepy_meta, score_col, output_dir)
     with poolcontext(processes=processes) as pool:
-        results = pool.map(func, gene_chunks)
+        pool.map(func, gene_chunks)
     return "Scores are ready in " + output_dir
 
 
