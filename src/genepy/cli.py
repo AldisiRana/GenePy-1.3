@@ -158,6 +158,7 @@ def calculate_pval(
     cases_column,
     test,
 ):
+    """Calculate the P-value between two given groups."""
     click.echo("The process for calculating the p_values will start now.")
     df = find_pvalue(
         scores_file=scores_file,

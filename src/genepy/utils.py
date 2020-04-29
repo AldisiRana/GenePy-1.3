@@ -220,6 +220,8 @@ def find_pvalue(
             except:
                 continue
             p_values.append([gene, statistic, p_val])
+    else:
+        raise Exception("The test you selected is not valid.")
     p_values_df = pd.DataFrame(p_values, columns=['genes', 'statistic', 'p_value']).sort_values(by=['p_value'])
     p_values_df.to_csv(output_file, sep='\t', index=False)
     return p_values_df
