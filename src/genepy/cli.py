@@ -32,25 +32,23 @@ def cross_annotate(
     caddout_file,
     output_path
 ):
-    click.echo("Reading annotated file ...")
-    freqanno = pd.read_csv(annotated_file, sep='\t', index_col=False, usecols=[0, 1, 3, 4, 5, 6, 10])
+    click.echo('Extracting allele frequencies ... ')
+    p = subprocess.call('cut -f 1,2,4,5,6,7,11 '+annotated_file+' >freqanno', shell=True)
+    freqanno = pd.read_csv('freqanno', sep='\t', index_col=False)
     click.echo("Reading caddout file ...")
     cadd_df = pd.read_csv(caddout_file, sep='\t', skiprows=1, index_col=False)
     click.echo("Combine Genotypes and annotations")
     raw_scores = cross_annotate_cadd(freq_df=freqanno, cadd_df=cadd_df)
     caddanno = pd.DataFrame(raw_scores, columns=['CADD15_RAW'])
-    click.echo("Reading vcf file ...")
-    b1 = pd.read_csv(vcf_file, sep='\t', index_col=False, skiprows=34)
-    b1 = b1.drop(b1.columns[:9], axis=1)
-    click.echo("Reading annovar input file ...")
-    geneanno = pd.read_csv(annovar_ready_file, sep='\t', index_col=False, header=None,
-                     usecols=range(17, len(b1.columns) + 17))
-    geneanno.columns = list(b1.columns)
+    caddanno.to_csv('caddanno', sep='\t', index=False)
+    click.echo("Extracting genotypes ...")
+    p = subprocess.call('cut -f 18- '+annovar_ready_file+' > a1', shell=True)
+    p = subprocess.call("grep '^#CHR' "+vcf_file+" | cut -f 10- > b1", shell=True)
+    p = subprocess.call('cat b1 a1 > geneanno', shell=True)
     click.echo("Merging all files ...")
-    final_df = pd.concat([freqanno, caddanno, geneanno], axis=1)
-    final_df.to_csv(output_path, index=False, sep='\t')
+    p = subprocess.call('paste freqanno caddanno geneanno > ' + output_path, shell=True)
+    p = subprocess.call('rm a1 b1 caddanno freqanno geneanno', shell=True)
     click.echo("Process is done.")
-    return final_df
 
 
 @main.command()
