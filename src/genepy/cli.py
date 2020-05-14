@@ -94,8 +94,10 @@ def get_genepy(
     with open(gene_list) as file:
         genes = [line.rstrip('\n') for line in file]
     gene_chunks = list(chunks(genes, chunk_size))
+    excluded = output_dir+'.excluded'
+    open(excluded, 'a').close()
     click.echo('Calculating genepy scores ... ')
-    func = partial(run_parallel, header, genepy_meta, score_col, output_dir)
+    func = partial(run_parallel, header, genepy_meta, score_col, output_dir, excluded)
     with poolcontext(processes=processes) as pool:
         pool.map(func, gene_chunks)
     return "Scores are ready in " + output_dir

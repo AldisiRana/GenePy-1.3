@@ -32,7 +32,7 @@ def cross_annotate_cadd(
     return scores.values()
 
 
-def calculate_genepy(gene_df, score_col):
+def calculate_genepy(gene, gene_df, score_col, excluded):
 
     gene_df = gene_df.replace(to_replace='0/0+', value=0, regex=True)
     gene_df = gene_df.replace(to_replace='0/[123456789]+', value=1, regex=True)
@@ -40,6 +40,11 @@ def calculate_genepy(gene_df, score_col):
     gene_df = gene_df.replace(to_replace='\./\.[\S]*', value=0, regex=True)
     scores = np.array(gene_df[score_col])
     scores[scores == '.'] = np.nan
+    if np.isnan(scores).any():
+        with open(excluded, "a") as f:
+            f.write(gene+"\n")
+        p = subprocess.call(['rm', gene + '.meta'])
+        return 'Gene does not have deleteriousness score!'
     scores = scores.astype('float')
     scores = (scores - (-7.535037))/(35.788538-(-7.535037))
     known_fa_all = np.array(gene_df['AF'])
@@ -91,7 +96,7 @@ def chunks(genes, x):
         yield genes[i:i+x]
 
 
-def run_parallel(header, meta_data, score_col, output_dir, genes):
+def run_parallel(header, meta_data, score_col, output_dir, excluded, genes):
     for gene in genes:
         if os.path.isfile(os.path.join(output_dir, gene+'_'+score_col+'_matrix')):
             click.echo('Scoring matrix exists!')
@@ -105,7 +110,10 @@ def run_parallel(header, meta_data, score_col, output_dir, genes):
             click.echo("Error! Gene not found!")
             p = subprocess.call(['rm', gene + '.meta'])
             continue
-        scores_matrix = calculate_genepy(gene_df, score_col)
+        scores_matrix = calculate_genepy(gene, gene_df, score_col, excluded)
+        if type(scores_matrix) == str:
+            click.echo(scores_matrix)
+            continue
         path = os.path.join(output_dir, gene+'_'+score_col+'_matrix')
         np.savetxt(path, scores_matrix, fmt='%s', delimiter='\t')
         p = subprocess.call(['rm', gene+'.meta'])
