@@ -40,12 +40,12 @@ def calculate_genepy(gene, gene_df, score_col, excluded):
     gene_df = gene_df.replace(to_replace='\./\.[\S]*', value=0, regex=True)
     scores = np.array(gene_df[score_col])
     scores[scores == '.'] = np.nan
+    scores = scores.astype('float')
     if np.isnan(scores).any():
         with open(excluded, "a") as f:
             f.write(gene+"\n")
         p = subprocess.call(['rm', gene + '.meta'])
         return 'Gene does not have deleteriousness score!'
-    scores = scores.astype('float')
     scores = (scores - (-7.535037))/(35.788538-(-7.535037))
     known_fa_all = np.array(gene_df['AF'])
     known_fa_all[known_fa_all == '.'] = np.nan
