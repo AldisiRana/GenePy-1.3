@@ -23,7 +23,7 @@ def cross_annotate_cadd(
     scores = {}
     for val in freq:
         if val not in cadd.keys():
-            val = (val[0], val[1] - 1)
+            val = (val[0], val[1] - 1, val[2], val[3])
         try:
             scores[val] = cadd[val]
         except:
