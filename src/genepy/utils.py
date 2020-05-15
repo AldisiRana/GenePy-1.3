@@ -16,9 +16,9 @@ def cross_annotate_cadd(
     freq_df,
     cadd_df,
 ):
-    freq = [(val[0], val[1]) for val in freq_df.values]
+    freq = [(val[0], val[1], val[2], val[3]) for val in freq_df.values]
     cadd = {
-        (val[0], val[1]): val[-2] for val in cadd_df.values
+        (val[0], val[1], val[2], val[3]): val[-2] for val in cadd_df.values
     }
     scores = {}
     for val in freq:
