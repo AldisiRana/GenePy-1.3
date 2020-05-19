@@ -179,6 +179,26 @@ def poolcontext(*args, **kwargs):
     pool.terminate()
 
 
+@main.command()
+@click.option('--vcf', required=True, help='The meta file with all variants and samples')
+def process_vcf(vcf_file):
+    sample = vcf_file.split('/')[-1].split('.')[0]
+    p = subprocess.call(
+        "./annovar/convert2annovar.pl -format vcf4 " + vcf_file + " -outfile " + sample + '.input' +
+        " -allsample -withfreq -include 2>annovar.log", shell=True)
+    p = subprocess.call(
+        "./annovar/table_annovar.pl " + sample + '.input' +
+        " ./annovar/humandb/ -buildver hg38 -out " + sample +
+        " -remove -protocol refGene,gnomad211_exome -operation g,f --thread 40 -nastring . >>annovar.log", shell=True)
+    caddin = sample + '_caddin.vcf'
+    p = subprocess.call('zgrep -v "^#" ' + vcf_file + ' >' + caddin, shell=True)
+    p = subprocess.call("sed -i 's|^chr||g' " + caddin, shell=True)
+    p = subprocess.call("conda activate cadd-env-v1.5", shell=True)
+    p = subprocess.call('./CADD-scripts/CADD.sh -g GRCh38 -v v1.5 -o ' + sample + '_caddout.tsv.gz ' + caddin,
+                        shell=True)
+    click.echo('Process is complete.')
+
+
 if __name__ == "__main__":
     main()
 
