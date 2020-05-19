@@ -197,7 +197,7 @@ def process_vcf(
     p = subprocess.call('zgrep -v "^#" ' + vcf + ' >' + caddin, shell=True)
     p = subprocess.call("sed -i 's|^chr||g' " + caddin, shell=True)
     subprocess.run('eval "$(conda shell.bash hook)"', shell=True)
-    subprocess.run("conda activate cadd-env-v1.5")
+    subprocess.run("conda activate cadd-env-v1.5", shell=True)
     p = subprocess.call('./CADD-scripts/CADD.sh -g GRCh38 -v v1.5 -o ' + sample + '_caddout.tsv.gz ' + caddin,
                         shell=True)
     subprocess.run("conda deactivate", shell=True)
