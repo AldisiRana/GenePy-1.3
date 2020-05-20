@@ -193,15 +193,22 @@ def process_vcf(
         "./annovar/table_annovar.pl " + sample + '.input' +
         " ./annovar/humandb/ -buildver hg38 -out " + sample +
         " -remove -protocol refGene,gnomad211_exome -operation g,f --thread 40 -nastring . >>annovar.log", shell=True)
-    caddin = sample + '_caddin.vcf'
+    click.echo('Process is complete.')
+
+
+@main.command()
+@click.option('--vcf', required=True)
+def get_cadd_scores(
+    *,
+    vcf
+):
+    # needs cadd environment
+    caddin = vcf.split('/')[-1].split('.')[0] + '_caddin.vcf'
     p = subprocess.call('zgrep -v "^#" ' + vcf + ' >' + caddin, shell=True)
     p = subprocess.call("sed -i 's|^chr||g' " + caddin, shell=True)
-    subprocess.run('eval "$(conda shell.bash hook)"', shell=True)
-    subprocess.run("conda activate cadd-env-v1.5", shell=True)
-    p = subprocess.call('./CADD-scripts/CADD.sh -g GRCh38 -v v1.5 -o ' + sample + '_caddout.tsv.gz ' + caddin,
-                        shell=True)
-    subprocess.run("conda deactivate", shell=True)
-    click.echo('Process is complete.')
+    p = subprocess.call(
+        './CADD-scripts/CADD.sh -g GRCh38 -v v1.5 -o ' + vcf.split('/')[-1].split('.')[0] + '_caddout.tsv.gz ' + caddin,
+        shell=True)
 
 
 if __name__ == "__main__":
