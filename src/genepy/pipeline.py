@@ -27,12 +27,15 @@ def run_parallel(header, meta_data, score_col, output_dir, excluded, genes):
             click.echo("Error! Gene not found!")
             p = subprocess.call(['rm', gene + '.meta'])
             continue
-        samples_df, scores, freqs = preprocess_df(gene, gene_df, score_col, excluded)
-        scores_matrix = score_db(samples_df, scores, freqs)
-        if type(scores_matrix) == str:
-            click.echo(scores_matrix)
+        gene_df[score_col].replace('.', np.nan)
+        if gene_df[score_col].isnull().all():
+            with open(excluded, "a") as f:
+                f.write(gene + "\n")
+            click.echo('Gene does not have deleteriousness score!')
             p = subprocess.call(['rm', gene + '.meta'])
             continue
+        samples_df, scores, freqs = preprocess_df(gene_df, score_col)
+        scores_matrix = score_db(samples_df, scores, freqs)
         samples_header = samples_df.columns
         final = np.vstack((samples_header, scores_matrix)).T
         path = os.path.join(output_dir, gene+'_'+score_col+'_matrix')
