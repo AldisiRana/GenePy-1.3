@@ -29,12 +29,7 @@ def cross_annotate_cadd(
 
 def preprocess_df(gene, gene_df, score_col, excluded):
     scores = np.array(gene_df[score_col])
-    scores[scores == '.'] = np.nan
     scores = scores.astype('float')
-    if np.isnan(scores).any():
-        with open(excluded, "a") as f:
-            f.write(gene + "\n")
-        return 'Gene does not have deleteriousness score!'
     scores = (scores - (-7.535037)) / (35.788538 - (-7.535037))
     gene_df = gene_df.drop([score_col], axis=1)
     gene_df = gene_df.replace(to_replace='0/0+', value=0, regex=True)
@@ -120,6 +115,12 @@ def score_genepy(
     open(excluded, 'a').close()
     for gene in genes:
         gene_df = meta_file.loc[meta_file['Gene.refGene'] == gene]
+        gene_df = gene_df.replace({score_col: {'.': np.nan}})
+        if gene_df[score_col].isnull().all():
+            with open(excluded, "a") as f:
+                f.write(gene + "\n")
+            click.echo('Gene does not have deleteriousness score!')
+            continue
         samples_df, scores, freqs = preprocess_df(gene, gene_df, score_col, excluded)
         scores_matrix = score_db(samples_df, scores, freqs)
         if type(scores_matrix) == str:
