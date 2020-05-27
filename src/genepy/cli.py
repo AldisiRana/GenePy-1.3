@@ -9,8 +9,8 @@ import pandas as pd
 from multiprocessing import Pool
 from functools import partial
 
-from .utils import cross_annotate_cadd, chunks, run_parallel, find_pvalue, normalize_gene_len, \
-    merge_matrices
+from .pipeline import run_parallel, normalize_gene_len, merge_matrices, find_pvalue, process_annovar, cadd_scoring
+from .utils import cross_annotate_cadd, chunks
 
 
 @click.group()
@@ -87,9 +87,6 @@ def get_genepy(
         header = "header"
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
-    # click.echo('Reading input dataframe ... ')
-    # meta_data = pd.read_csv(genepy_meta, sep='\t', index_col=False, chunksize=1000000)
-    # df = pd.concat(meta_data)
     click.echo('Processing gene list ... ')
     with open(gene_list) as file:
         genes = [line.rstrip('\n') for line in file]
@@ -181,18 +178,11 @@ def poolcontext(*args, **kwargs):
 
 @main.command()
 @click.option('--vcf', required=True)
-def process_vcf(
+def annovar_processing(
     *,
     vcf
 ):
-    sample = vcf.split('/')[-1].split('.')[0]
-    p = subprocess.call(
-        "./annovar/convert2annovar.pl -format vcf4 " + vcf + " -outfile " + sample + '.input' +
-        " -allsample -withfreq -include 2>annovar.log", shell=True)
-    p = subprocess.call(
-        "./annovar/table_annovar.pl " + sample + '.input' +
-        " ./annovar/humandb/ -buildver hg38 -out " + sample +
-        " -remove -protocol refGene,gnomad211_exome -operation g,f --thread 40 -nastring . >>annovar.log", shell=True)
+    process_annovar(vcf)
     click.echo('Process is complete.')
 
 
@@ -203,12 +193,8 @@ def get_cadd_scores(
     vcf
 ):
     # needs cadd environment
-    caddin = vcf.split('/')[-1].split('.')[0] + '_caddin.vcf'
-    p = subprocess.call('zgrep -v "^#" ' + vcf + ' >' + caddin, shell=True)
-    p = subprocess.call("sed -i 's|^chr||g' " + caddin, shell=True)
-    p = subprocess.call(
-        './CADD-scripts/CADD.sh -g GRCh38 -v v1.5 -o ' + vcf.split('/')[-1].split('.')[0] + '_caddout.tsv.gz ' + caddin,
-        shell=True)
+    cadd_scoring(vcf)
+    click.echo('CADD scoring is complete.')
 
 
 if __name__ == "__main__":
