@@ -36,10 +36,8 @@ def run_parallel(header, meta_data, score_col, output_dir, excluded, genes):
             continue
         samples_df, scores, freqs = preprocess_df(gene_df, score_col)
         scores_matrix = score_db(samples_df, scores, freqs)
-        samples_header = samples_df.columns
-        final = np.vstack((samples_header, scores_matrix)).T
         path = os.path.join(output_dir, gene+'_'+score_col+'_matrix')
-        np.savetxt(path, final, fmt='%s', delimiter='\t')
+        np.savetxt(path, scores_matrix, fmt='%s', delimiter='\t')
         p = subprocess.call(['rm', gene+'.meta'])
 
 
@@ -178,3 +176,5 @@ def cadd_scoring(vcf):
         './CADD-scripts/CADD.sh -g GRCh38 -v v1.5 -o ' + vcf.split('/')[-1].split('.')[0] + '_caddout.tsv.gz ' + caddin,
         shell=True)
     p = subprocess.call('rm '+caddin)
+
+

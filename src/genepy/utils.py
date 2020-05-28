@@ -69,7 +69,10 @@ def score_db(samples, score, freq):
 
     out1 = np.array(out1)  # then these values will be stored into the out1 array.
     out1 = np.sum(out1, axis=0)  # the out1 is then condensed by suming the columns for each sample.
-    return out1
+
+    samples_header = samples.columns
+    final = np.vstack((samples_header, out1)).T
+    return final
 
 
 def chunks(genes, x):
@@ -106,13 +109,12 @@ def score_genepy(
     genepy_meta,
     gene_list,
     score_col,
-    output_file
+    excluded
 ):
     meta_file = pd.read_csv(genepy_meta, sep='\t', index_col=False)
     with open(gene_list) as file:
         genes = [line.rstrip('\n') for line in file]
-    excluded = output_file + '.excluded'
-    open(excluded, 'a').close()
+    full_df = pd.DataFrame(columns='sample_id')
     for gene in genes:
         gene_df = meta_file.loc[meta_file['Gene.refGene'] == gene]
         gene_df[score_col].replace('.', np.nan)
@@ -123,5 +125,6 @@ def score_genepy(
             continue
         samples_df, scores, freqs = preprocess_df(gene_df, score_col)
         scores_matrix = score_db(samples_df, scores, freqs)
-        ## create a dataframe for a sample and all its gene scores
-
+        score_df = pd.DataFrame(scores_matrix, columns=['sample_id', gene])
+        full_df = pd.merge(full_df, score_df, how='right')
+    return full_df

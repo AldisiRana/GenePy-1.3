@@ -10,7 +10,7 @@ from multiprocessing import Pool
 from functools import partial
 
 from .pipeline import run_parallel, normalize_gene_len, merge_matrices, find_pvalue, process_annovar, cadd_scoring
-from .utils import cross_annotate_cadd, chunks
+from .utils import cross_annotate_cadd, chunks, score_genepy
 
 
 @click.group()
@@ -98,6 +98,28 @@ def get_genepy(
     with poolcontext(processes=processes) as pool:
         pool.map(func, gene_chunks)
     return "Scores are ready in " + output_dir
+
+
+@main.command()
+@click.option('--input-dir', required=True, help='the directory path with all meta files')
+@click.option('--gene-list', required=True, help='a list of all the genes to score')
+@click.option('--score-col', required=True, help='the name of the score column in genepy meta.')
+@click.option('--output-file', default=400, help='path to outputfile')
+def get_genepy_folder(
+    *,
+    input_dir,
+    gene_list,
+    score_col,
+    output_file
+):
+    excluded = output_file + '.excluded'
+    open(excluded, 'a').close()
+    complete_df = pd.DataFrame()
+    for file in os.listdir(input_dir):
+        scores_df = score_genepy(genepy_meta=file, gene_list=gene_list, score_col=score_col)
+        complete_df = pd.concat([complete_df, scores_df])
+    complete_df.to_csv(output_file, sep='\t', index=False)
+    return complete_df
 
 
 @main.command()
