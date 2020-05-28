@@ -160,7 +160,7 @@ def find_pvalue(
 
 def process_annovar(vcf, output_dir=''):
     sample = os.path.join(output_dir, vcf.split('/')[-1].split('.')[0])
-    p = subprocess.run("./annovar/convert2annovar.pl -format vcf4 " + vcf +
+    p = subprocess.call("./annovar/convert2annovar.pl -format vcf4 " + vcf +
                        " -outfile "+sample+".input  -allsample  -withfreq  -include 2>annovar.log", shell=True)
     p = subprocess.call(
         "./annovar/table_annovar.pl " + sample + '.input' +
