@@ -158,8 +158,8 @@ def find_pvalue(
     return p_values_df
 
 
-def process_annovar(vcf):
-    sample = vcf.split('/')[-1].split('.')[0]
+def process_annovar(vcf, output_dir=''):
+    sample = os.path.join(output_dir, vcf.split('/')[-1].split('.')[0])
     p = subprocess.run("./annovar/convert2annovar.pl -format vcf4 " + vcf +
                        " -outfile "+sample+".input  -allsample  -withfreq  -include 2>annovar.log", shell=True)
     p = subprocess.call(
@@ -168,13 +168,13 @@ def process_annovar(vcf):
         " -remove -protocol refGene,gnomad211_exome -operation g,f --thread 40 -nastring . >>annovar.log", shell=True)
 
 
-def cadd_scoring(vcf):
-    caddin = vcf.split('/')[-1].split('.')[0] + '_caddin.vcf'
+def cadd_scoring(vcf, output_dir=''):
+    caddin = os.path.join(output_dir, vcf.split('/')[-1].split('.')[0] + '_caddin.vcf')
     p = subprocess.call('zgrep -v "^#" ' + vcf + ' >' + caddin, shell=True)
     p = subprocess.call("sed -i 's|^chr||g' " + caddin, shell=True)
+    caddout = os.path.join(output_dir, vcf.split('/')[-1].split('.')[0] + '_caddout.tsv.gz ')
     p = subprocess.call(
-        './CADD-scripts/CADD.sh -g GRCh38 -v v1.5 -o ' + vcf.split('/')[-1].split('.')[0] + '_caddout.tsv.gz ' + caddin,
+        './CADD-scripts/CADD.sh -g GRCh38 -v v1.5 -o ' + caddout + caddin,
         shell=True)
     p = subprocess.call('rm '+caddin)
-
 

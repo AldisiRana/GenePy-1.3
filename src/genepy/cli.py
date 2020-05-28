@@ -199,24 +199,44 @@ def poolcontext(*args, **kwargs):
 
 
 @main.command()
-@click.option('--vcf', required=True)
+@click.option('--vcfs', required=True)
+@click.option('--output-dir', default='')
 def annovar_processing(
     *,
-    vcf
+    vcfs,
+    output_dir
 ):
-    process_annovar(vcf)
-    click.echo('Process is complete.')
+    if os.path.isfile(vcfs):
+        process_annovar(vcfs)
+    elif os.path.isdir(vcfs):
+        if not os.path.isdir(output_dir):
+            os.mkdir(output_dir)
+        for file in os.listdir(vcfs):
+            process_annovar(file, output_dir)
+    else:
+        return Exception('Vcf file/folder path does not exist!')
+    return 'Process is complete.'
 
 
 @main.command()
-@click.option('--vcf', required=True)
+@click.option('--vcfs', required=True)
+@click.option('--output-dir', default='')
 def get_cadd_scores(
     *,
-    vcf
+    vcfs,
+    output_dir
 ):
     # needs cadd environment
-    cadd_scoring(vcf)
-    click.echo('CADD scoring is complete.')
+    if os.path.isfile(vcfs):
+        cadd_scoring(vcfs)
+    elif os.path.isdir(vcfs):
+        if not os.path.isdir(output_dir):
+            os.mkdir(output_dir)
+        for file in os.listdir(vcfs):
+            cadd_scoring(file, output_dir)
+    else:
+        return Exception('Vcf file/folder path does not exist!')
+    return 'CADD scoring is complete.'
 
 
 if __name__ == "__main__":
