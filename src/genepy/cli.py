@@ -213,7 +213,7 @@ def annovar_processing(
             os.mkdir(output_dir)
         for file in os.listdir(vcfs):
             if file.endswith(('gvcf.gz', '.vcf', 'vcf.gz', 'gvcf')):
-                process_annovar(file, output_dir)
+                process_annovar(os.path.join(vcfs, file), output_dir)
     else:
         return Exception('Vcf file/folder path does not exist!')
     return 'Process is complete.'
@@ -235,7 +235,7 @@ def get_cadd_scores(
             os.mkdir(output_dir)
         for file in os.listdir(vcfs):
             if file.endswith(('gvcf.gz', '.vcf', 'vcf.gz', 'gvcf')):
-                cadd_scoring(file, output_dir)
+                cadd_scoring(os.path.join(vcfs, file), output_dir)
     else:
         return Exception('Vcf file/folder path does not exist!')
     return 'CADD scoring is complete.'
