@@ -86,7 +86,7 @@ def normalize_gene_len(
             only_unique=False,
         )
     genes_lengths = {
-        row['Gene name']: (row['Gene end (bp)'] - row['Gene start (bp)'])
+        row['Gene name']: round((row['Gene end (bp)'] - row['Gene start (bp)']) / 1000, 3)
         for _, row in genes_df.iterrows()
     }
     scores_df = pd.read_csv(matrix_file, sep='\t')
