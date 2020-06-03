@@ -118,6 +118,8 @@ def get_genepy_folder(
     open(excluded, 'a').close()
     complete_df = pd.DataFrame()
     vcf_files = []
+    if not os.path.isdir(annotated_files_dir):
+        os.mkdir(annotated_files_dir)
     for file in os.listdir(vcf_dir):
         if file.endswith(('gvcf.gz', '.vcf', 'vcf.gz', 'gvcf')):
             vcf_files.append(os.path.join(vcf_dir, file))
