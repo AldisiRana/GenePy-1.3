@@ -107,16 +107,13 @@ def combine_genotype_annotation(
 def score_genepy(
     *,
     genepy_meta,
-    gene_list,
+    genes,
     score_col,
     excluded
 ):
-    meta_file = pd.read_csv(genepy_meta, sep='\t', index_col=False)
-    with open(gene_list) as file:
-        genes = [line.rstrip('\n') for line in file]
     full_df = pd.DataFrame(columns='sample_id')
     for gene in genes:
-        gene_df = meta_file.loc[meta_file['Gene.refGene'] == gene]
+        gene_df = genepy_meta.loc[genepy_meta['Gene.refGene'] == gene]
         gene_df[score_col].replace('.', np.nan)
         if gene_df[score_col].isnull().all():
             with open(excluded, "a") as f:

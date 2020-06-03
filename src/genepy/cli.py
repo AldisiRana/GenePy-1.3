@@ -101,13 +101,19 @@ def get_genepy(
 
 
 @main.command()
-@click.option('--input-dir', required=True, help='the directory path with all meta files')
+@click.option('--vcf-dir', required=True, help='the directory path with all meta files')
+@click.option('--annovar-ready-dir', required=True)
+@click.option('--annotated-files-dir', required=True)
+@click.option('--caddout-dir', required=True)
 @click.option('--gene-list', required=True, help='a list of all the genes to score')
 @click.option('--score-col', required=True, help='the name of the score column in genepy meta.')
 @click.option('--output-file', default=400, help='path to outputfile')
 def get_genepy_folder(
     *,
-    input_dir,
+    vcf_dir,
+    annovar_ready_dir,
+    annotated_files_dir,
+    caddout_dir,
     gene_list,
     score_col,
     output_file
@@ -115,8 +121,10 @@ def get_genepy_folder(
     excluded = output_file + '.excluded'
     open(excluded, 'a').close()
     complete_df = pd.DataFrame()
+    with open(gene_list) as file:
+        genes = [line.rstrip('\n') for line in file]
     for file in os.listdir(input_dir):
-        scores_df = score_genepy(genepy_meta=file, gene_list=gene_list, score_col=score_col)
+        scores_df = score_genepy(genepy_meta=file, genes=genes, score_col=score_col)
         complete_df = pd.concat([complete_df, scores_df])
     complete_df.to_csv(output_file, sep='\t', index=False)
     return complete_df
