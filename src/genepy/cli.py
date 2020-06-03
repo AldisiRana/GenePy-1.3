@@ -139,7 +139,7 @@ def get_genepy_folder(
     else:
         gene_list = pd.read_csv(annotated_files[0], usecols=['Gene.refGene'])
         genes = list(gene_list['Gene.refGene'].unique())
-    scores_dict = {'cadd': 'CADD_Raw', 'revel': 'REVEL', 'eigen': 'Eigen', 'dann': 'dann'}
+    scores_dict = {'cadd': 'CADD_Raw', 'ljb26_all': 'CADD_Raw', 'revel': 'REVEL', 'eigen': 'Eigen', 'dann': 'dann'}
     for i in range(len(annotated_files)-1):
         combined_df = combine_genotype_annotation(
             vcf_file=vcf_files[i],
