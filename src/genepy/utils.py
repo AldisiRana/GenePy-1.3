@@ -85,8 +85,6 @@ def combine_genotype_annotation(
     vcf_file,
     annovar_ready_file,
     annotated_file,
-    caddout_file,
-    output_path
 ):
     with open(vcf_file, 'r') as f:
         for line in f:
@@ -95,13 +93,9 @@ def combine_genotype_annotation(
     geneanno = pd.read_csv(annovar_ready_file, sep='\t', header=None).iloc[:, 17:]
     geneanno.columns = header
     freqanno = pd.read_csv(annotated_file, sep='\t', usecols=[0, 1, 3, 4, 5, 6, 10])
-    cadd_df = pd.read_csv(caddout_file, sep='\t', skiprows=1, index_col=False)
     click.echo("Combine Genotypes and annotations")
-    raw_scores = cross_annotate_cadd(freq_df=freqanno, cadd_df=cadd_df)
-    caddanno = pd.DataFrame(raw_scores, columns=['CADD15_RAW'])
-    full_df = pd.concat([freqanno, caddanno, geneanno])
-    full_df.to_csv(output_path, index=False, sep='\t')
-    click.echo('Process is complete.')
+    full_df = pd.concat([freqanno, geneanno])
+    return full_df
 
 
 def score_genepy(

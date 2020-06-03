@@ -158,14 +158,15 @@ def find_pvalue(
     return p_values_df
 
 
-def process_annovar(vcf, output_dir=''):
+def process_annovar(vcf, del_m='cadd', output_dir=''):
     sample = os.path.join(output_dir, vcf.split('/')[-1].split('.')[0])
     p = subprocess.call("./annovar/convert2annovar.pl -format vcf4 " + vcf +
                         " -outfile "+sample+".input  -allsample  -withfreq  -include 2>annovar.log", shell=True)
     p = subprocess.call(
         "./annovar/table_annovar.pl " + sample + '.input' +
         " ./annovar/humandb/ -buildver hg38 -out " + sample +
-        " -remove -protocol refGene,gnomad211_exome -operation g,f --thread 40 -nastring . >>annovar.log", shell=True)
+        " -remove -protocol refGene,gnomad211_exome -operation g,f," + del_m + " --thread 40 -nastring . >>annovar.log",
+        shell=True)
 
 
 def cadd_scoring(vcf, output_dir=''):

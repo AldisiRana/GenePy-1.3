@@ -10,7 +10,7 @@ from multiprocessing import Pool
 from functools import partial
 
 from .pipeline import run_parallel, normalize_gene_len, merge_matrices, find_pvalue, process_annovar, cadd_scoring
-from .utils import cross_annotate_cadd, chunks, score_genepy
+from .utils import cross_annotate_cadd, chunks, score_genepy, combine_genotype_annotation
 
 
 @click.group()
@@ -102,30 +102,56 @@ def get_genepy(
 
 @main.command()
 @click.option('--vcf-dir', required=True, help='the directory path with all meta files')
-@click.option('--annovar-ready-dir', required=True)
 @click.option('--annotated-files-dir', required=True)
-@click.option('--caddout-dir', required=True)
-@click.option('--gene-list', required=True, help='a list of all the genes to score')
-@click.option('--score-col', required=True, help='the name of the score column in genepy meta.')
+@click.option('--gene-list', default=None, help='a list of all the genes to score. if not provided it will be created')
+@click.option('--del-matrix', defualt='cadd', help='one or multiple del matrices. format: m1,m2,m3')
 @click.option('--output-file', default=400, help='path to outputfile')
 def get_genepy_folder(
     *,
     vcf_dir,
-    annovar_ready_dir,
     annotated_files_dir,
-    caddout_dir,
     gene_list,
-    score_col,
+    del_matrix,
     output_file
 ):
     excluded = output_file + '.excluded'
     open(excluded, 'a').close()
     complete_df = pd.DataFrame()
-    with open(gene_list) as file:
-        genes = [line.rstrip('\n') for line in file]
-    for file in os.listdir(input_dir):
-        scores_df = score_genepy(genepy_meta=file, genes=genes, score_col=score_col)
-        complete_df = pd.concat([complete_df, scores_df])
+    vcf_files = []
+    for file in os.listdir(vcf_dir):
+        if file.endswith(('gvcf.gz', '.vcf', 'vcf.gz', 'gvcf')):
+            vcf_files.append(os.path.join(vcf_dir, file))
+            process_annovar(vcf=file, del_m=del_matrix, output_dir=annotated_files_dir)
+    annotated_files = []
+    input_files = []
+    for file in os.listdir(annotated_files_dir):
+        if file.endswith('.input'):
+            input_files.append(os.path.join(annotated_files_dir, file))
+        elif file.endswith('.hg38_multianno.txt'):
+            annotated_files.append(os.path.join(annotated_files_dir, file))
+    if len(annotated_files) != len(input_files):
+        return Exception("Error in annovar processing! Files do not match!")
+    if gene_list:
+        with open(gene_list) as file:
+            genes = [line.rstrip('\n') for line in file]
+    else:
+        gene_list = pd.read_csv(annotated_files[0], usecols=['Gene.refGene'])
+        genes = list(gene_list['Gene.refGene'].unique())
+    scores_dict = {'cadd': 'CADD_Raw', 'revel': 'REVEL', 'eigen': 'Eigen', 'dann': 'dann'}
+    for i in range(len(annotated_files)-1):
+        combined_df = combine_genotype_annotation(
+            vcf_file=vcf_files[i],
+            annovar_ready_file=input_files[i],
+            annotated_file=annotated_files[i]
+        )
+        for m in del_matrix.split(','):
+            if m == 'gwava':
+                scores_df_01 = score_genepy(genepy_meta=combined_df, genes=genes, score_col='GWAVA_region_score')
+                scores_df_02 = score_genepy(genepy_meta=combined_df, genes=genes, score_col=' GWAVA_tss_score')
+                scores_df = pd.merge(scores_df_01, scores_df_02)
+            elif m in scores_dict.keys():
+                scores_df = score_genepy(genepy_meta=combined_df, genes=genes, score_col=scores_dict[m])
+            complete_df = pd.concat([complete_df, scores_df])
     complete_df.to_csv(output_file, sep='\t', index=False)
     return complete_df
 
