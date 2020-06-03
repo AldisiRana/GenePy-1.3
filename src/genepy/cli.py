@@ -123,7 +123,7 @@ def get_genepy_folder(
     for file in os.listdir(vcf_dir):
         if file.endswith(('gvcf.gz', '.vcf', 'vcf.gz', 'gvcf')):
             vcf_files.append(os.path.join(vcf_dir, file))
-            process_annovar(vcf=file, del_m=del_matrix, output_dir=annotated_files_dir)
+            process_annovar(vcf=os.path.join(vcf_dir, file), del_m=del_matrix, output_dir=annotated_files_dir)
     annotated_files = []
     input_files = []
     for file in os.listdir(annotated_files_dir):
