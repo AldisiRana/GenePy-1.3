@@ -105,7 +105,7 @@ def get_genepy(
 @click.option('--annotated-files-dir', required=True)
 @click.option('--gene-list', default=None, help='a list of all the genes to score. if not provided it will be created')
 @click.option('--del-matrix', default='cadd', help='one or multiple del matrices. format: m1,m2,m3')
-@click.option('--output-file', default=400, help='path to outputfile')
+@click.option('--output-file', required=True, help='path to outputfile')
 def get_genepy_folder(
     *,
     vcf_dir,
