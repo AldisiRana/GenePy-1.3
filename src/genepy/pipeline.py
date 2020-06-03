@@ -162,14 +162,13 @@ def process_annovar(vcf, del_m='cadd', output_dir=''):
     sample = os.path.join(output_dir, vcf.split('/')[-1].split('.')[0])
     p = subprocess.call("./annovar/convert2annovar.pl -format vcf4 " + vcf +
                         " -outfile "+sample+".input  -allsample  -withfreq  -include 2>annovar.log", shell=True)
-    op = len(del_m.split(','))
     f = ''
-    for i in range(op-1):
+    for i in del_m.split(','):
         f = f+',f'
     p = subprocess.call(
         "./annovar/table_annovar.pl " + sample + '.input' +
         " ./annovar/humandb/ -buildver hg38 -out " + sample +
-        " -remove -protocol refGene,gnomad211_exome,"+ del_m +" -operation g,f" + f + " --thread 40 -nastring . >>annovar.log",
+        " -remove -protocol refGene,gnomad211_exome," + del_m +" -operation g,f" + f + " --thread 40 -nastring . >>annovar.log",
         shell=True)
 
 
