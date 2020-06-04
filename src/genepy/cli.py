@@ -105,6 +105,8 @@ def get_genepy(
 @click.option('--annotated-files-dir', required=True)
 @click.option('--gene-list', default=None, help='a list of all the genes to score. if not provided it will be created')
 @click.option('--del-matrix', default='cadd', help='one or multiple del matrices. format: m1,m2,m3')
+@click.option('--build', default='hg38', type=click.Choice(['hg18', 'hg19', 'hg38']),
+              help='build version for annotations')
 @click.option('--output-file', required=True, help='path to outputfile')
 def get_genepy_folder(
     *,
@@ -112,6 +114,7 @@ def get_genepy_folder(
     annotated_files_dir,
     gene_list,
     del_matrix,
+    build,
     output_file
 ):
     excluded = output_file + '.excluded'
@@ -123,7 +126,12 @@ def get_genepy_folder(
     for file in os.listdir(vcf_dir):
         if file.endswith(('gvcf.gz', '.vcf', 'vcf.gz', 'gvcf')):
             vcf_files.append(os.path.join(vcf_dir, file))
-            process_annovar(vcf=os.path.join(vcf_dir, file), del_m=del_matrix, output_dir=annotated_files_dir)
+            process_annovar(
+                vcf=os.path.join(vcf_dir, file),
+                del_m=del_matrix,
+                build=build,
+                output_dir=annotated_files_dir
+            )
     annotated_files = []
     input_files = []
     for file in os.listdir(annotated_files_dir):
