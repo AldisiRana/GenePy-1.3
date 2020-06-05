@@ -158,17 +158,21 @@ def find_pvalue(
     return p_values_df
 
 
-def process_annovar(vcf, del_m='cadd', build='hg38', output_dir=''):
+def process_annovar(vcf, del_m=None, build='hg38', output_dir=''):
+    if del_m is None:
+        del_m = ['cadd']
     sample = os.path.join(output_dir, vcf.split('/')[-1].split('.')[0])
     p = subprocess.call("./annovar/convert2annovar.pl -format vcf4 " + vcf +
                         " -outfile "+sample+".input  -allsample  -withfreq  -include 2>annovar.log", shell=True)
     f = ''
-    for i in del_m.split(','):
+    m = ''
+    for x in del_m:
         f = f+',f'
+        m = m + ',' + x
     p = subprocess.call(
         "./annovar/table_annovar.pl " + sample + '.input' +
         " ./annovar/humandb/ -buildver " + build + " -out " + sample +
-        " -remove -protocol refGene,gnomad211_exome," + del_m +" -operation g,f" + f +
+        " -remove -protocol refGene,gnomad211_exome" + m +" -operation g,f" + f +
         " --thread 40 -nastring . >>annovar.log",
         shell=True)
 
