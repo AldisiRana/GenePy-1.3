@@ -9,8 +9,9 @@ import pandas as pd
 from multiprocessing import Pool
 from functools import partial
 
+from src.genepy.constants import SCORES_TO_COL_NAMES
 from .pipeline import run_parallel, normalize_gene_len, merge_matrices, find_pvalue, process_annovar, cadd_scoring
-from .utils import cross_annotate_cadd, chunks, score_genepy, combine_genotype_annotation
+from .utils import cross_annotate_cadd, chunks, score_genepy, combine_genotype_annotation, create_genes_list
 
 
 @click.group()
@@ -22,7 +23,7 @@ def main():
 @click.option('--vcf-file', required=True, help='the filtered vcf file.')
 @click.option('--annovar-ready-file', required=True, help='the annover prepared file.')
 @click.option('--annotated-file', required=True, help='the file with annotations.')
-@click.option('--caddout-file', required=True, help='the output file from CADD.')
+@click.option('--caddout-file', default=None, help='the output file from CADD.')
 @click.option('--output-path', required=True, help='the path for the output file.')
 def cross_annotate(
     *,
@@ -38,16 +39,20 @@ def cross_annotate(
     click.echo("Reading caddout file ...")
     cadd_df = pd.read_csv(caddout_file, sep='\t', skiprows=1, index_col=False)
     click.echo("Combine Genotypes and annotations")
-    raw_scores = cross_annotate_cadd(freq_df=freqanno, cadd_df=cadd_df)
-    caddanno = pd.DataFrame(raw_scores, columns=['CADD15_RAW'])
-    caddanno.to_csv('caddanno', sep='\t', index=False)
     click.echo("Extracting genotypes ...")
     p = subprocess.call('cut -f 18- '+annovar_ready_file+' > a1', shell=True)
     p = subprocess.call("grep '^#CHR' "+vcf_file+" | cut -f 10- > b1", shell=True)
     p = subprocess.call('cat b1 a1 > geneanno', shell=True)
     click.echo("Merging all files ...")
-    p = subprocess.call('paste freqanno caddanno geneanno > ' + output_path, shell=True)
-    p = subprocess.call('rm a1 b1 caddanno freqanno geneanno', shell=True)
+    if caddout_file:
+        raw_scores = cross_annotate_cadd(freq_df=freqanno, cadd_df=cadd_df)
+        caddanno = pd.DataFrame(raw_scores, columns=['CADD15_RAW'])
+        caddanno.to_csv('caddanno', sep='\t', index=False)
+        p = subprocess.call('paste freqanno caddanno geneanno > ' + output_path, shell=True)
+        p = subprocess.call('rm a1 b1 caddanno freqanno geneanno', shell=True)
+    else:
+        p = subprocess.call('paste freqanno geneanno > ' + output_path, shell=True)
+        p = subprocess.call('rm a1 b1 freqanno geneanno', shell=True)
     click.echo("Process is done.")
 
 
@@ -104,7 +109,9 @@ def get_genepy(
 @click.option('--vcf-dir', required=True, help='the directory path with all meta files')
 @click.option('--annotated-files-dir', required=True)
 @click.option('--gene-list', default=None, help='a list of all the genes to score. if not provided it will be created')
-@click.option('--del-matrix', default='cadd', help='one or multiple del matrices. format: m1,m2,m3')
+@click.option('--del-matrix', default=['cadd'],
+              type=click.Choice(['cadd', 'cadd13', 'dann', 'gwava', 'revel', 'eigen', 'ljb26_all']),
+              help='one or multiple del matrices', multiple=True)
 @click.option('--build', default='hg38', type=click.Choice(['hg18', 'hg19', 'hg38']),
               help='build version for annotations')
 @click.option('--output-file', required=True, help='path to outputfile')
@@ -121,6 +128,10 @@ def get_genepy_folder(
     open(excluded, 'a').close()
     complete_df = pd.DataFrame()
     vcf_files = []
+    del_anno_folder = click.confirm("Delete annotations folder before program termination?", abort=False)
+    del_temp = True
+    if not del_anno_folder:
+        del_temp = click.confirm("Delete temporary files before program termination?", abort=False)
     if not os.path.isdir(annotated_files_dir):
         os.mkdir(annotated_files_dir)
     for file in os.listdir(vcf_dir):
@@ -137,7 +148,7 @@ def get_genepy_folder(
     for file in os.listdir(annotated_files_dir):
         if file.endswith('.input'):
             input_files.append(os.path.join(annotated_files_dir, file))
-        elif file.endswith('.hg38_multianno.txt'):
+        elif file.endswith('_multianno.txt'):
             annotated_files.append(os.path.join(annotated_files_dir, file))
     if len(annotated_files) != len(input_files):
         return Exception("Error in annovar processing! Files do not match!")
@@ -145,26 +156,37 @@ def get_genepy_folder(
         with open(gene_list) as file:
             genes = [line.rstrip('\n') for line in file]
     else:
-        gene_list = pd.read_csv(annotated_files[1], sep='\t', usecols=['Gene.refGene'])
-        genes = list(gene_list['Gene.refGene'].unique())
-        if '.' in genes:
-            genes.remove('.')
-    scores_dict = {'cadd': 'CADD_Raw', 'ljb26_all': 'CADD_Raw', 'revel': 'REVEL', 'eigen': 'Eigen', 'dann': 'dann'}
+        genes = create_genes_list(annotated_files[0])
     for i in range(len(annotated_files)):
         combined_df = combine_genotype_annotation(
             vcf_file=vcf_files[i],
             annovar_ready_file=input_files[i],
             annotated_file=annotated_files[i]
         )
-        for m in del_matrix.split(','):
-            if m == 'gwava':
-                scores_df_01 = score_genepy(genepy_meta=combined_df, genes=genes, score_col='GWAVA_region_score')
-                scores_df_02 = score_genepy(genepy_meta=combined_df, genes=genes, score_col=' GWAVA_tss_score')
-                scores_df = pd.merge(scores_df_01, scores_df_02)
-            elif m in scores_dict.keys():
-                scores_df = score_genepy(genepy_meta=combined_df, genes=genes, score_col=scores_dict[m])
+        for matrix in del_matrix:
+            if SCORES_TO_COL_NAMES[matrix] == 1:
+                scores_df = score_genepy(
+                    genepy_meta=combined_df, genes=genes, score_col=SCORES_TO_COL_NAMES[matrix], excluded=excluded
+                )
+            else:
+                scores_df = pd.DataFrame()
+                for score_col in SCORES_TO_COL_NAMES[matrix]:
+                    temp_df = score_genepy(
+                        genepy_meta=combined_df, genes=genes, score_col=score_col, excluded=excluded
+                    )
+                    scores_df = pd.concat([scores_df, temp_df])
             complete_df = pd.concat([complete_df, scores_df])
     complete_df.to_csv(output_file, sep='\t', index=False)
+    click.echo('Scoring is complete.')
+    if del_anno_folder:
+        click.echo('Annotations folder will be deleted now!')
+        os.removedirs(annotated_files_dir)
+    elif del_temp:
+        click.echo('Temporary files will be deleted now!')
+        for file in os.listdir(annotated_files_dir):
+            if file.endswith('.input') or file.endswith('_multianno.txt'):
+                continue
+            os.remove(file)
     return complete_df
 
 
