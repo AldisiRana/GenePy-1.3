@@ -114,7 +114,7 @@ def score_genepy(
     score_col,
     excluded
 ):
-    full_df = pd.DataFrame(columns='sample_id')
+    full_df = pd.DataFrame(columns=['sample_id'])
     for gene in genes:
         gene_df = genepy_meta.loc[genepy_meta['Gene.refGene'] == gene]
         gene_df[score_col].replace('.', np.nan)
@@ -128,3 +128,11 @@ def score_genepy(
         score_df = pd.DataFrame(scores_matrix, columns=['sample_id', gene])
         full_df = pd.merge(full_df, score_df, how='right')
     return full_df
+
+
+def create_genes_list(filepath):
+    gene_list = pd.read_csv(filepath, sep='\t', usecols=['Gene.refGene'])
+    genes = list(gene_list['Gene.refGene'].unique())
+    if '.' in genes:
+        genes.remove('.')
+    return genes
