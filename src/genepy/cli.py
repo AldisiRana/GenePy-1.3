@@ -9,7 +9,7 @@ import pandas as pd
 from multiprocessing import Pool
 from functools import partial
 
-from src.genepy.constants import SCORES_TO_COL_NAMES
+from .constants import SCORES_TO_COL_NAMES
 from .pipeline import run_parallel, normalize_gene_len, merge_matrices, find_pvalue, process_annovar, cadd_scoring
 from .utils import cross_annotate_cadd, chunks, score_genepy, combine_genotype_annotation, create_genes_list
 
