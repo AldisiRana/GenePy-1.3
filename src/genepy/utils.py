@@ -86,6 +86,7 @@ def combine_genotype_annotation(
     vcf_file,
     annovar_ready_file,
     annotated_file,
+    scores_col,
 ):
     if vcf_file.endswith('.gz'):
         with gzip.open(vcf_file, 'rb') as f:
@@ -101,7 +102,9 @@ def combine_genotype_annotation(
                     header = line.strip().split("\t")[9:]
     geneanno = pd.read_csv(annovar_ready_file, sep='\t', header=None).iloc[:, 17:]
     geneanno.columns = header
-    freqanno = pd.read_csv(annotated_file, sep='\t', usecols=[0, 1, 3, 4, 5, 6, 10])
+    freqanno = pd.read_csv(
+        annotated_file, sep='\t',
+        usecols=['Chr', 'Start', 'Ref', 'Alt', 'Func.refGene', 'Gene.refGene', 'AF']+scores_col)
     click.echo("Combine Genotypes and annotations")
     full_df = pd.concat([freqanno, geneanno], axis=1)
     return full_df

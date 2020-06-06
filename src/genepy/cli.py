@@ -158,12 +158,13 @@ def get_genepy_folder(
     else:
         genes = create_genes_list(annotated_files[0])
     for i in range(len(annotated_files)):
-        combined_df = combine_genotype_annotation(
-            vcf_file=vcf_files[i],
-            annovar_ready_file=input_files[i],
-            annotated_file=annotated_files[i]
-        )
         for matrix in del_matrix:
+            combined_df = combine_genotype_annotation(
+                vcf_file=vcf_files[i],
+                annovar_ready_file=input_files[i],
+                annotated_file=annotated_files[i],
+                scores_col=SCORES_TO_COL_NAMES[matrix]
+            )
             if SCORES_TO_COL_NAMES[matrix] == 1:
                 scores_df = score_genepy(
                     genepy_meta=combined_df, genes=genes, score_col=SCORES_TO_COL_NAMES[matrix], excluded=excluded
