@@ -9,6 +9,8 @@ import pandas as pd
 from multiprocessing import Pool
 from functools import partial
 
+from tqdm import tqdm
+
 from .constants import SCORES_TO_COL_NAMES
 from .pipeline import run_parallel, normalize_gene_len, merge_matrices, find_pvalue, process_annovar, cadd_scoring
 from .utils import cross_annotate_cadd, chunks, score_genepy, combine_genotype_annotation, create_genes_list
@@ -157,7 +159,7 @@ def get_genepy_folder(
             genes = [line.rstrip('\n') for line in file]
     else:
         genes = create_genes_list(annotated_files[0])
-    for i in range(len(annotated_files)):
+    for i in tqdm(range(len(annotated_files)), desc='Getting scores for annotated files'):
         for matrix in del_matrix:
             combined_df = combine_genotype_annotation(
                 vcf_file=vcf_files[i],

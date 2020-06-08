@@ -125,7 +125,6 @@ def score_genepy(
             if excluded:
                 with open(excluded, "a") as f:
                     f.write(gene + "\n")
-            click.echo('Gene does not have deleteriousness score!')
             continue
         samples_df, scores, freqs = preprocess_df(gene_df, score_col)
         scores_matrix = score_db(samples_df, scores, freqs)
