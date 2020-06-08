@@ -115,15 +115,16 @@ def score_genepy(
     genepy_meta,
     genes,
     score_col,
-    excluded
+    excluded=None
 ):
     full_df = pd.DataFrame(columns=['sample_id'])
     for gene in genes:
         gene_df = genepy_meta.loc[genepy_meta['Gene.refGene'] == gene]
         gene_df[score_col] = gene_df[score_col].replace('.', np.nan)
         if gene_df[score_col].isnull().all():
-            with open(excluded, "a") as f:
-                f.write(gene + "\n")
+            if excluded:
+                with open(excluded, "a") as f:
+                    f.write(gene + "\n")
             click.echo('Gene does not have deleteriousness score!')
             continue
         samples_df, scores, freqs = preprocess_df(gene_df, score_col)
