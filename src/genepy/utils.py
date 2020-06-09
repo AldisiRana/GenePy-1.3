@@ -120,7 +120,7 @@ def score_genepy(
     full_df = pd.DataFrame(columns=['sample_id'])
     for gene in genes:
         gene_df = genepy_meta.loc[genepy_meta['Gene.refGene'] == gene]
-        gene_df.loc[gene_df[score_col] == '.', score_col] = np.nan
+        gene_df.loc[(gene_df[score_col] == '.'), score_col] = np.nan
         if gene_df[score_col].isnull().all():
             if excluded:
                 with open(excluded, "a") as f:

@@ -167,9 +167,9 @@ def get_genepy_folder(
                 annotated_file=annotated_files[i],
                 scores_col=SCORES_TO_COL_NAMES[matrix]
             )
-            if SCORES_TO_COL_NAMES[matrix] == 1:
+            if len(SCORES_TO_COL_NAMES[matrix]) == 1:
                 scores_df = score_genepy(
-                    genepy_meta=combined_df, genes=genes, score_col=SCORES_TO_COL_NAMES[matrix], excluded=excluded
+                    genepy_meta=combined_df, genes=genes, score_col=SCORES_TO_COL_NAMES[matrix][0], excluded=excluded
                 )
             else:
                 scores_df = pd.DataFrame()
