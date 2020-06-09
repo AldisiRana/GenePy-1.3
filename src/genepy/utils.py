@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 import re
 
+from tqdm import tqdm
+
 
 def cross_annotate_cadd(
     *,
@@ -118,7 +120,7 @@ def score_genepy(
     excluded=None
 ):
     full_df = pd.DataFrame(columns=['sample_id'])
-    for gene in genes:
+    for gene in tqdm(genes, desc='Getting scores for genes'):
         gene_df = genepy_meta.copy()
         gene_df = gene_df.loc[gene_df['Gene.refGene'] == gene]
         gene_df.loc[(gene_df[score_col] == '.'), score_col] = np.nan
