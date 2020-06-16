@@ -50,7 +50,7 @@ def preprocess_df(gene_df, score_col):
     freqs[:, 1][freqs[:, 1] == 1] = 1 - 3.98e-6
     freqs[:, 0] = 1 - freqs[:, 1]
 
-    samples = [c for c in gene_df if re.match("\d", c[0])]
+    samples = [c for c in gene_df if re.match("[a-zA-Z0-9]+_+[0-9]", c)]
     samples_df = gene_df[samples]
     samples_df = samples_df.astype(float) / 2.00
     return samples_df, scores, freqs
