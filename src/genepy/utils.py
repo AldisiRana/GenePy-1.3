@@ -132,6 +132,7 @@ def score_genepy(
         samples_df, scores, freqs = preprocess_df(gene_df, score_col)
         scores_matrix = score_db(samples_df, scores, freqs)
         score_df = pd.DataFrame(scores_matrix, columns=['sample_id', gene])
+        score_df['score'] = score_col
         full_df = pd.merge(full_df, score_df, how='right')
     return full_df
 
