@@ -158,7 +158,6 @@ def get_genepy_folder(
             genes = [line.rstrip('\n') for line in file]
     else:
         genes = create_genes_list(annotated_files[0])
-    complete_df = pd.DataFrame(columns=['sample_id'])
     for i in tqdm(range(len(annotated_files)), desc='Processing annotated files'):
         for matrix in del_matrix:
             combined_df = combine_genotype_annotation(
@@ -171,17 +170,13 @@ def get_genepy_folder(
                 scores_df = score_genepy(
                     genepy_meta=combined_df, genes=genes, score_col=SCORES_TO_COL_NAMES[matrix][0], excluded=excluded
                 )
-                scores_df['score'] = SCORES_TO_COL_NAMES[matrix][0]
+                scores_df.to_csv(output_file, sep='\t', index=False)
             else:
-                scores_df = pd.DataFrame()
                 for score_col in SCORES_TO_COL_NAMES[matrix]:
-                    temp_df = score_genepy(
+                    scores_df = score_genepy(
                         genepy_meta=combined_df, genes=genes, score_col=score_col, excluded=excluded
                     )
-                    temp_df['score'] = score_col
-                    scores_df = pd.concat([scores_df, temp_df])
-            complete_df = pd.concat([complete_df, scores_df])
-    complete_df.to_csv(output_file, sep='\t', index=False)
+                    scores_df.to_csv(score_col+output_file, sep='\t', index=False)
     click.echo('Scoring is complete.')
     if del_anno_folder:
         click.echo('Annotations folder will be deleted now!')
@@ -192,7 +187,6 @@ def get_genepy_folder(
             if file.endswith('.input') or file.endswith('_multianno.txt'):
                 continue
             os.remove(file)
-    return complete_df
 
 
 @main.command()
