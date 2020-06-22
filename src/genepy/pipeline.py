@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from pybiomart import Dataset
 import scipy.stats as stats
+import statsmodels.api as sm
 from tqdm import tqdm
 
 from .utils import preprocess_df, score_db
@@ -113,10 +114,12 @@ def find_pvalue(
     output_file,
     genes=None,
     cases_column,
+    pc_file=None,
     test='mannwhitneyu',
 ):
     """
     Calculate the significance of a gene in a population using Mann-Whitney-U test.
+    :param pc_file:
     :param test:
     :param scores_file: a tsv file containing the scores of genes across samples.
     :param genotype_file: a file containing the information of the sample.
@@ -142,6 +145,7 @@ def find_pvalue(
             except:
                 continue
             p_values.append([gene, u_statistic, p_val])
+        p_values_df = pd.DataFrame(p_values, columns=['genes', 'statistic', 'p_value']).sort_values(by=['p_value'])
     elif test == 'ttest_ind':
         for gene in tqdm(genes, desc='Calculating p_values for genes'):
             case_0 = df_by_cases.get_group(cases[0])[gene].tolist()
@@ -151,9 +155,28 @@ def find_pvalue(
             except:
                 continue
             p_values.append([gene, statistic, p_val])
+        p_values_df = pd.DataFrame(p_values, columns=['genes', 'statistic', 'p_value']).sort_values(by=['p_value'])
+    elif test == 'logit':
+        if not pc_file:
+            raise Exception("Need principle components file.")
+        pc_df = pd.read_csv(pc_file, sep='\t', index_col=False)
+        merged_df = pd.merge(merged_df, pc_df, on='patient_id')
+        for gene in tqdm(genes, desc='Calculating p_values for genes'):
+            X = merged_df[[gene, 'PC1', 'PC2', 'PC3']]
+            X = sm.add_constant(X)
+            Y = merged_df[[cases_column]]
+            try:
+                logit_model = sm.Logit(Y, X)
+                result = logit_model.fit()
+            except:
+                continue
+            pval = list(result.pvalues)
+            p_values.append([gene]+pval)
+        p_values_df = pd.DataFrame(
+            p_values, columns=['genes', 'const_pval', 'p_value', 'PC1_pval', 'PC2_pvcal', 'PC3_pval' ]
+        ).sort_values(by=['p_value'])
     else:
         raise Exception("The test you selected is not valid.")
-    p_values_df = pd.DataFrame(p_values, columns=['genes', 'statistic', 'p_value']).sort_values(by=['p_value'])
     p_values_df.to_csv(output_file, sep='\t', index=False)
     return p_values_df
 

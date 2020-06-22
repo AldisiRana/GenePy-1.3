@@ -238,9 +238,10 @@ def normalize(
 @click.option('-o', '--output-file', required=True, help="The path to output the pvalues of genes.")
 @click.option('-g', '--genes',
               help="a list containing the genes to calculate. if not provided all genes will be used.")
-@click.option('-t', '--test', required=True, type=click.Choice(['ttest_ind', 'mannwhitneyu']),
+@click.option('-t', '--test', required=True, type=click.Choice(['ttest_ind', 'mannwhitneyu', 'logit']),
               help='statistical test for calculating P value.')
 @click.option('-c', '--cases-column', required=True, help="the name of the column that contains the case/control type.")
+@click.option('p', '--pc-file', default=None, help="Principle components values for logistic regression.")
 def calculate_pval(
     *,
     scores_file,
@@ -249,6 +250,7 @@ def calculate_pval(
     genes,
     cases_column,
     test,
+    pc_file,
 ):
     """Calculate the P-value between two given groups."""
     click.echo("The process for calculating the p_values will start now.")
@@ -259,6 +261,7 @@ def calculate_pval(
         genes=genes,
         cases_column=cases_column,
         test=test,
+        pc_file=pc_file,
     )
     click.echo('Process is complete.')
     click.echo(df.info())
