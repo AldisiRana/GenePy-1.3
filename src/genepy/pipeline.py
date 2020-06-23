@@ -14,7 +14,7 @@ from tqdm import tqdm
 from .utils import preprocess_df, score_db
 
 
-def run_parallel(header, meta_data, score_col, output_dir, excluded, genes):
+def run_parallel_genes_meta(header, meta_data, score_col, output_dir, excluded, genes):
     for gene in genes:
         if os.path.isfile(os.path.join(output_dir, gene+'_'+score_col+'_matrix')):
             click.echo('Scoring matrix exists!')
@@ -40,6 +40,11 @@ def run_parallel(header, meta_data, score_col, output_dir, excluded, genes):
         path = os.path.join(output_dir, gene+'_'+score_col+'_matrix')
         np.savetxt(path, scores_matrix, fmt='%s', delimiter='\t')
         p = subprocess.call(['rm', gene+'.meta'])
+
+
+def run_parallel_annovar(del_m, build, output_dir, vcf_list):
+    for vcf in vcf_list:
+        process_annovar(vcf, del_m, build, output_dir)
 
 
 def merge_matrices(

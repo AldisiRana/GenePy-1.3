@@ -12,7 +12,8 @@ from functools import partial
 from tqdm import tqdm
 
 from .constants import SCORES_TO_COL_NAMES
-from .pipeline import run_parallel, normalize_gene_len, merge_matrices, find_pvalue, process_annovar, cadd_scoring
+from .pipeline import run_parallel_genes_meta, normalize_gene_len, merge_matrices, find_pvalue, process_annovar, \
+    cadd_scoring, run_parallel_annovar
 from .utils import cross_annotate_cadd, chunks, score_genepy, combine_genotype_annotation, create_genes_list
 
 
@@ -101,7 +102,7 @@ def get_genepy(
     excluded = output_dir+'.excluded'
     open(excluded, 'a').close()
     click.echo('Calculating genepy scores ... ')
-    func = partial(run_parallel, header, genepy_meta, score_col, output_dir, excluded)
+    func = partial(run_parallel_genes_meta, header, genepy_meta, score_col, output_dir, excluded)
     with poolcontext(processes=processes) as pool:
         pool.map(func, gene_chunks)
     return "Scores are ready in " + output_dir
@@ -117,6 +118,7 @@ def get_genepy(
 @click.option('--build', default='hg38', type=click.Choice(['hg18', 'hg19', 'hg38']),
               help='build version for annotations')
 @click.option('--output-file', required=True, help='path to outputfile')
+@click.option('--processes', default=24, help='Number of processes working in parallel.')
 def get_genepy_folder(
     *,
     vcf_dir,
@@ -124,7 +126,8 @@ def get_genepy_folder(
     gene_list,
     del_matrix,
     build,
-    output_file
+    output_file,
+    processes,
 ):
     excluded = output_file + '.excluded'
     open(excluded, 'a').close()
@@ -135,15 +138,13 @@ def get_genepy_folder(
         del_temp = click.confirm("Delete temporary files before program termination?", abort=False)
     if not os.path.isdir(annotated_files_dir):
         os.mkdir(annotated_files_dir)
+
     for file in os.listdir(vcf_dir):
         if file.endswith(('gvcf.gz', '.vcf', 'vcf.gz', 'gvcf')):
             vcf_files.append(os.path.join(vcf_dir, file))
-            process_annovar(
-                vcf=os.path.join(vcf_dir, file),
-                del_m=del_matrix,
-                build=build,
-                output_dir=annotated_files_dir
-            )
+    func = partial(run_parallel_annovar, del_matrix, build, annotated_files_dir)
+    with poolcontext(processes=processes) as pool:
+        pool.map(func, vcf_files)
     annotated_files = []
     input_files = []
     for file in os.listdir(annotated_files_dir):
@@ -235,7 +236,7 @@ def normalize(
 @click.option('-t', '--test', required=True, type=click.Choice(['ttest_ind', 'mannwhitneyu', 'logit']),
               help='statistical test for calculating P value.')
 @click.option('-c', '--cases-column', required=True, help="the name of the column that contains the case/control type.")
-@click.option('p', '--pc-file', default=None, help="Principle components values for logistic regression.")
+@click.option('-p', '--pc-file', default=None, help="Principle components values for logistic regression.")
 def calculate_pval(
     *,
     scores_file,
