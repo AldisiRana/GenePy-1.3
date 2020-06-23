@@ -42,9 +42,8 @@ def run_parallel_genes_meta(header, meta_data, score_col, output_dir, excluded, 
         p = subprocess.call(['rm', gene+'.meta'])
 
 
-def run_parallel_annovar(del_m, build, output_dir, vcf_list):
-    for vcf in vcf_list:
-        process_annovar(vcf, del_m, build, output_dir)
+def run_parallel_annovar(del_m, build, output_dir, vcf):
+    process_annovar(vcf, del_m, build, output_dir)
 
 
 def merge_matrices(
