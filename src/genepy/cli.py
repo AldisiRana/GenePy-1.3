@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 from .constants import SCORES_TO_COL_NAMES
 from .pipeline import run_parallel_genes_meta, normalize_gene_len, merge_matrices, find_pvalue, process_annovar, \
-    cadd_scoring, run_parallel_annovar
+    cadd_scoring, run_parallel_annovar, run_parallel_scoring
 from .utils import cross_annotate_cadd, chunks, score_genepy, combine_genotype_annotation, create_genes_list
 
 
@@ -173,11 +173,9 @@ def get_genepy_folder(
                 )
                 scores_df.to_csv(output_file, sep='\t', index=False)
             else:
-                for score_col in SCORES_TO_COL_NAMES[matrix]:
-                    scores_df = score_genepy(
-                        genepy_meta=combined_df, genes=genes, score_col=score_col, excluded=excluded
-                    )
-                    scores_df.to_csv(score_col+output_file, sep='\t', index=False)
+                func = partial(run_parallel_scoring, combined_df, genes, output_file, excluded)
+                with poolcontext(processes=processes) as pool:
+                    pool.map(func, SCORES_TO_COL_NAMES[matrix])
     click.echo('Scoring is complete.')
     if del_anno_folder:
         click.echo('Annotations folder will be deleted now!')

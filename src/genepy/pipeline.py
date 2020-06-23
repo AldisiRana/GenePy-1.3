@@ -11,7 +11,7 @@ import scipy.stats as stats
 import statsmodels.api as sm
 from tqdm import tqdm
 
-from .utils import preprocess_df, score_db
+from .utils import preprocess_df, score_db, score_genepy
 
 
 def run_parallel_genes_meta(header, meta_data, score_col, output_dir, excluded, genes):
@@ -44,6 +44,13 @@ def run_parallel_genes_meta(header, meta_data, score_col, output_dir, excluded, 
 
 def run_parallel_annovar(del_m, build, output_dir, vcf):
     process_annovar(vcf, del_m, build, output_dir)
+
+
+def run_parallel_scoring(combined_df, genes, output_file, excluded, score_col):
+    scores_df = score_genepy(
+        genepy_meta=combined_df, genes=genes, score_col=score_col, excluded=excluded
+    )
+    scores_df.to_csv(score_col + output_file, sep='\t', index=False)
 
 
 def merge_matrices(
