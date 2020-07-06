@@ -96,12 +96,14 @@ def combine_genotype_annotation(
                 if line.startswith(b'#CHROM'):
                     line = line.decode('utf-8')
                     header = line.strip().split("\t")[9:]
+                    break
     else:
         with open(vcf_file, 'rb') as f:
             for line in f:
                 if line.startswith(b'#CHROM'):
                     line = line.decode('utf-8')
                     header = line.strip().split("\t")[9:]
+                    break
     geneanno = pd.read_csv(annovar_ready_file, sep='\t', header=None).iloc[:, 17:]
     geneanno.columns = header
     freqanno = pd.read_csv(
