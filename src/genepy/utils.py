@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 import gzip
+from contextlib import contextmanager
 
 import click
 import numpy as np
 import pandas as pd
+from multiprocessing import Pool
 import re
 
 from tqdm import tqdm
@@ -144,3 +146,43 @@ def create_genes_list(filepath):
     if '.' in genes:
         genes.remove('.')
     return genes
+
+
+def gzip_reader(file_name):
+    for row in gzip.open(file_name, "rb"):
+        yield row
+
+
+def file_reader(file_name):
+    for row in open(file_name, "rb"):
+        yield row
+
+
+def process_annotated_vcf(vcf):
+    if vcf.endswith('.gz'):
+        file_gen = gzip_reader(vcf)
+    else:
+        file_gen = file_reader(vcf)
+    lines = []
+    for row in file_gen:
+        if row.startswith(b'##'):
+            continue
+        lines.append(row.decode('utf-8').strip('\n').split('\t'))
+    df = pd.DataFrame(lines[1:], columns=lines[0])
+    for ind, row in df.iterrows():
+        for value in row['INFO'].split(';'):
+            if len(value.split('=')) < 2:
+                continue
+            if value.split('=')[0] not in df.columns:
+                df[value.split('=')[0]] = "NaN"
+            df.at[ind, value.split('=')[0]] = value.split('=')[1]
+    df = df.drop(columns=['INFO'])
+    df = df.rename(columns={"gene": 'Gene.refGene'})
+    return df
+
+
+@contextmanager
+def poolcontext(*args, **kwargs):
+    pool = Pool(*args, **kwargs)
+    yield pool
+    pool.terminate()

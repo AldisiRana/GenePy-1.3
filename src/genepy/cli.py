@@ -2,19 +2,18 @@
 
 import os
 import subprocess
-from contextlib import contextmanager
 
 import click
 import pandas as pd
-from multiprocessing import Pool
 from functools import partial
 
 from tqdm import tqdm
 
 from .constants import SCORES_TO_COL_NAMES
 from .pipeline import run_parallel_genes_meta, normalize_gene_len, merge_matrices, find_pvalue, process_annovar, \
-    cadd_scoring, run_parallel_annovar, run_parallel_scoring
-from .utils import cross_annotate_cadd, chunks, score_genepy, combine_genotype_annotation, create_genes_list
+    cadd_scoring, run_parallel_annovar, run_parallel_scoring, parallel_annotated_vcf_prcoessing
+from .utils import cross_annotate_cadd, chunks, score_genepy, combine_genotype_annotation, create_genes_list, \
+    poolcontext
 
 
 @click.group()
@@ -110,7 +109,7 @@ def get_genepy(
 
 @main.command()
 @click.option('--vcf-dir', required=True, help='the directory path with all meta files')
-@click.option('--annotated-files-dir', required=True)
+@click.option('--annotated-files-dir', default=None, help='the directory path for annotated files')
 @click.option('--gene-list', default=None, help='a list of all the genes to score. if not provided it will be created')
 @click.option('--del-matrix', default=['cadd'],
               type=click.Choice(['cadd', 'cadd13', 'dann', 'gwava', 'revel', 'eigen', 'ljb26_all']),
@@ -119,6 +118,8 @@ def get_genepy(
               help='build version for annotations')
 @click.option('--output-file', required=True, help='path to outputfile')
 @click.option('--processes', default=24, help='Number of processes working in parallel.')
+@click.option('--annotated-vcf', is_flag=True)
+@click.option('--scores-col', default=['RawScore'], help='if annotated-vcf, scores columns names must be provided')
 def get_genepy_folder(
     *,
     vcf_dir,
@@ -128,64 +129,71 @@ def get_genepy_folder(
     build,
     output_file,
     processes,
+    annotated_vcf,
+    scores_col,
 ):
     excluded = output_file + '.excluded'
     open(excluded, 'a').close()
     vcf_files = []
-    del_anno_folder = click.confirm("Delete annotations folder before program termination?", abort=False)
-    del_temp = True
-    if not del_anno_folder:
-        del_temp = click.confirm("Delete temporary files before program termination?", abort=False)
-    if not os.path.isdir(annotated_files_dir):
-        os.mkdir(annotated_files_dir)
-
     for file in os.listdir(vcf_dir):
-        if file.endswith(('gvcf.gz', '.vcf', 'vcf.gz', 'gvcf')):
+        if file.endswith(('gvcf.gz', '.vcf', 'vcf.gz', 'gvcf', 'gz')):
             vcf_files.append(os.path.join(vcf_dir, file))
-    func = partial(run_parallel_annovar, del_matrix, build, annotated_files_dir)
-    with poolcontext(processes=processes) as pool:
-        pool.map(func, vcf_files)
-    annotated_files = []
-    input_files = []
-    for file in os.listdir(annotated_files_dir):
-        if file.endswith('.input'):
-            input_files.append(os.path.join(annotated_files_dir, file))
-        elif file.endswith('_multianno.txt'):
-            annotated_files.append(os.path.join(annotated_files_dir, file))
-    if len(annotated_files) != len(input_files):
-        return Exception("Error in annovar processing! Files do not match!")
-    if gene_list:
-        with open(gene_list) as file:
-            genes = [line.rstrip('\n') for line in file]
+    if annotated_vcf:
+        click.echo('processing annotated vcf files')
+        func = partial(parallel_annotated_vcf_prcoessing, gene_list, scores_col, output_file, excluded, processes)
+        with poolcontext(processes=processes) as pool:
+            pool.map(func, vcf_files)
     else:
-        genes = create_genes_list(annotated_files[0])
-    for i in tqdm(range(len(annotated_files)), desc='Processing annotated files'):
-        for matrix in del_matrix:
-            combined_df = combine_genotype_annotation(
-                vcf_file=vcf_files[i],
-                annovar_ready_file=input_files[i],
-                annotated_file=annotated_files[i],
-                scores_col=SCORES_TO_COL_NAMES[matrix]
-            )
-            if len(SCORES_TO_COL_NAMES[matrix]) == 1:
-                scores_df = score_genepy(
-                    genepy_meta=combined_df, genes=genes, score_col=SCORES_TO_COL_NAMES[matrix][0], excluded=excluded
-                )
-                scores_df.to_csv(output_file, sep='\t', index=False)
-            else:
-                func = partial(run_parallel_scoring, combined_df, genes, output_file, excluded)
-                with poolcontext(processes=processes) as pool:
-                    pool.map(func, SCORES_TO_COL_NAMES[matrix])
-    click.echo('Scoring is complete.')
-    if del_anno_folder:
-        click.echo('Annotations folder will be deleted now!')
-        os.removedirs(annotated_files_dir)
-    elif del_temp:
-        click.echo('Temporary files will be deleted now!')
+        del_anno_folder = click.confirm("Delete annotations folder before program termination?", abort=False)
+        del_temp = True
+        if not del_anno_folder:
+            del_temp = click.confirm("Delete temporary files before program termination?", abort=False)
+        if not os.path.isdir(annotated_files_dir):
+            os.mkdir(annotated_files_dir)
+        func = partial(run_parallel_annovar, del_matrix, build, annotated_files_dir)
+        with poolcontext(processes=processes) as pool:
+            pool.map(func, vcf_files)
+        annotated_files = []
+        input_files = []
         for file in os.listdir(annotated_files_dir):
-            if file.endswith('.input') or file.endswith('_multianno.txt'):
-                continue
-            os.remove(file)
+            if file.endswith('.input'):
+                input_files.append(os.path.join(annotated_files_dir, file))
+            elif file.endswith('_multianno.txt'):
+                annotated_files.append(os.path.join(annotated_files_dir, file))
+        if len(annotated_files) != len(input_files):
+            return Exception("Error in annovar processing! Files do not match!")
+        if gene_list:
+            with open(gene_list) as file:
+                genes = [line.rstrip('\n') for line in file]
+        else:
+            genes = create_genes_list(annotated_files[0])
+        for i in tqdm(range(len(annotated_files)), desc='Processing annotated files'):
+            for matrix in del_matrix:
+                combined_df = combine_genotype_annotation(
+                    vcf_file=vcf_files[i],
+                    annovar_ready_file=input_files[i],
+                    annotated_file=annotated_files[i],
+                    scores_col=SCORES_TO_COL_NAMES[matrix]
+                )
+                if len(SCORES_TO_COL_NAMES[matrix]) == 1:
+                    scores_df = score_genepy(
+                        genepy_meta=combined_df, genes=genes, score_col=SCORES_TO_COL_NAMES[matrix][0], excluded=excluded
+                    )
+                    scores_df.to_csv(output_file, sep='\t', index=False)
+                else:
+                    func = partial(run_parallel_scoring, combined_df, genes, output_file, excluded)
+                    with poolcontext(processes=processes) as pool:
+                        pool.map(func, SCORES_TO_COL_NAMES[matrix])
+        click.echo('Scoring is complete.')
+        if del_anno_folder:
+            click.echo('Annotations folder will be deleted now!')
+            os.removedirs(annotated_files_dir)
+        elif del_temp:
+            click.echo('Temporary files will be deleted now!')
+            for file in os.listdir(annotated_files_dir):
+                if file.endswith('.input') or file.endswith('_multianno.txt'):
+                    continue
+                os.remove(file)
 
 
 @main.command()
@@ -258,13 +266,6 @@ def calculate_pval(
     )
     click.echo('Process is complete.')
     click.echo(df.info())
-
-
-@contextmanager
-def poolcontext(*args, **kwargs):
-    pool = Pool(*args, **kwargs)
-    yield pool
-    pool.terminate()
 
 
 @main.command()

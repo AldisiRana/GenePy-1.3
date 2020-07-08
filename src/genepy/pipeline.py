@@ -2,6 +2,7 @@
 
 import os
 import subprocess
+from functools import partial
 
 import click
 import numpy as np
@@ -11,7 +12,7 @@ import scipy.stats as stats
 import statsmodels.api as sm
 from tqdm import tqdm
 
-from .utils import preprocess_df, score_db, score_genepy
+from .utils import preprocess_df, score_db, score_genepy, process_annotated_vcf, create_genes_list, poolcontext
 
 
 def run_parallel_genes_meta(header, meta_data, score_col, output_dir, excluded, genes):
@@ -51,6 +52,24 @@ def run_parallel_scoring(combined_df, genes, output_file, excluded, score_col):
         genepy_meta=combined_df, genes=genes, score_col=score_col, excluded=excluded
     )
     scores_df.to_csv(score_col + output_file, sep='\t', index=False)
+
+
+def parallel_annotated_vcf_prcoessing(gene_list, scores_col, output_file, excluded, processes, vcf):
+    df = process_annotated_vcf(vcf)
+    if gene_list:
+        with open(gene_list) as file:
+            genes = [line.rstrip('\n') for line in file]
+    else:
+        genes = create_genes_list(vcf)
+    if len(scores_col) == 1:
+        scores_df = score_genepy(
+            genepy_meta=df, genes=genes, score_col=scores_col[0], excluded=excluded
+        )
+        scores_df.to_csv(output_file, sep='\t', index=False)
+    else:
+        func = partial(run_parallel_scoring, df, genes, output_file, excluded)
+        with poolcontext(processes=processes) as pool:
+            pool.map(func, scores_col)
 
 
 def merge_matrices(
