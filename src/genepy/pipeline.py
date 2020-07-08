@@ -61,7 +61,7 @@ def parallel_annotated_vcf_prcoessing(gene_list, scores_col, output_file, exclud
         with open(gene_list) as file:
             genes = [line.rstrip('\n') for line in file]
     else:
-        gene_list = []
+        #gene_list = []
         # if vcf.endswith('.gz'):
         #     file_gen = gzip_reader(vcf)
         # else:
