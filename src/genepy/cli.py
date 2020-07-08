@@ -119,7 +119,8 @@ def get_genepy(
 @click.option('--output-file', required=True, help='path to outputfile')
 @click.option('--processes', default=24, help='Number of processes working in parallel.')
 @click.option('--annotated-vcf', is_flag=True)
-@click.option('--scores-col', default=['RawScore'], help='if annotated-vcf, scores columns names must be provided')
+@click.option('--scores-col', default=['RawScore'], multiple=True, 
+              help='if annotated-vcf, scores columns names must be provided')
 def get_genepy_folder(
     *,
     vcf_dir,
