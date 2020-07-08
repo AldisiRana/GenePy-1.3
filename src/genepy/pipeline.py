@@ -12,7 +12,8 @@ import scipy.stats as stats
 import statsmodels.api as sm
 from tqdm import tqdm
 
-from .utils import preprocess_df, score_db, score_genepy, process_annotated_vcf, create_genes_list, poolcontext
+from .utils import preprocess_df, score_db, score_genepy, process_annotated_vcf, create_genes_list, poolcontext, \
+    gzip_reader, file_reader
 
 
 def run_parallel_genes_meta(header, meta_data, score_col, output_dir, excluded, genes):
@@ -60,7 +61,18 @@ def parallel_annotated_vcf_prcoessing(gene_list, scores_col, output_file, exclud
         with open(gene_list) as file:
             genes = [line.rstrip('\n') for line in file]
     else:
-        genes = create_genes_list(vcf)
+        gene_list = []
+        # if vcf.endswith('.gz'):
+        #     file_gen = gzip_reader(vcf)
+        # else:
+        #     file_gen = file_reader(vcf)
+        # for row in file_gen:
+        #     gene = row[row.find(b'gene=') + 1: row.find(b';')]
+        #     gene_list.append(gene.decode('utf-8'))
+        # genes = list(set(gene_list))
+        genes = list(df['Gene.refGene'].unique())
+        if '.' in genes:
+            genes.remove('.')
     if len(scores_col) == 1:
         scores_df = score_genepy(
             genepy_meta=df, genes=genes, score_col=scores_col[0], excluded=excluded
