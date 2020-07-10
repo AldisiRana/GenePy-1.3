@@ -134,7 +134,7 @@ def get_genepy_folder(
     scores_col,
 ):
     excluded = output_file + '.excluded'
-    open(excluded, 'a').close()
+    open(excluded, 'w').close()
     vcf_files = []
     for file in os.listdir(vcf_dir):
         if file.endswith(('gvcf.gz', '.vcf', 'vcf.gz', 'gvcf', 'gz')):
