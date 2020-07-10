@@ -3,6 +3,7 @@ import gzip
 from contextlib import contextmanager
 
 import click
+import gc
 import numpy as np
 import pandas as pd
 from multiprocessing import Pool
@@ -123,10 +124,9 @@ def score_genepy(
     score_col,
     excluded=None
 ):
-    full_df = pd.DataFrame(columns=['sample_id'])
+    full_df = pd.DataFrame()
     for gene in tqdm(genes, desc='Getting scores for genes'):
-        gene_df = genepy_meta.copy()
-        gene_df = gene_df.loc[gene_df['Gene.refGene'] == gene]
+        gene_df = genepy_meta.loc[genepy_meta['Gene.refGene'] == gene]
         gene_df.loc[(gene_df[score_col] == '.'), score_col] = np.nan
         if gene_df[score_col].isnull().all():
             if excluded:
@@ -136,7 +136,9 @@ def score_genepy(
         samples_df, scores, freqs = preprocess_df(gene_df, score_col)
         scores_matrix = score_db(samples_df, scores, freqs)
         score_df = pd.DataFrame(scores_matrix, columns=['sample_id', gene])
-        full_df = pd.merge(full_df, score_df, how='right')
+        full_df = full_df.append(score_df)
+        del gene_df, score_df, samples_df, scores, freqs
+        gc.collect()
     return full_df
 
 
@@ -164,7 +166,7 @@ def process_annotated_vcf(vcf):
     else:
         file_gen = file_reader(vcf)
     lines = []
-    for row in file_gen:
+    for row in tqdm(file_gen):
         if row.startswith(b'##'):
             continue
         lines.append(row.decode('utf-8').strip('\n').split('\t'))

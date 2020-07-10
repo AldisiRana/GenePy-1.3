@@ -11,9 +11,10 @@ from pybiomart import Dataset
 import scipy.stats as stats
 import statsmodels.api as sm
 from tqdm import tqdm
+import gc
 
-from .utils import preprocess_df, score_db, score_genepy, process_annotated_vcf, create_genes_list, poolcontext, \
-    gzip_reader, file_reader
+from .utils import preprocess_df, score_db, score_genepy, process_annotated_vcf, \
+    poolcontext
 
 
 def run_parallel_genes_meta(header, meta_data, score_col, output_dir, excluded, genes):
@@ -59,18 +60,10 @@ def parallel_annotated_vcf_prcoessing(gene_list, scores_col, output_file, exclud
     df = process_annotated_vcf(vcf)
     if gene_list:
         with open(gene_list) as file:
-            genes = [line.rstrip('\n') for line in file]
+            genes = [line.rstrip('\n').encode() for line in file]
     else:
-        #gene_list = []
-        # if vcf.endswith('.gz'):
-        #     file_gen = gzip_reader(vcf)
-        # else:
-        #     file_gen = file_reader(vcf)
-        # for row in file_gen:
-        #     gene = row[row.find(b'gene=') + 1: row.find(b';')]
-        #     gene_list.append(gene.decode('utf-8'))
-        # genes = list(set(gene_list))
-        genes = list(df['Gene.refGene'].unique())
+        click.echo('Creating genes list')
+        genes = list(gene_list['Gene.refGene'].unique())
         if '.' in genes:
             genes.remove('.')
     if len(scores_col) == 1:
@@ -78,10 +71,13 @@ def parallel_annotated_vcf_prcoessing(gene_list, scores_col, output_file, exclud
             genepy_meta=df, genes=genes, score_col=scores_col[0], excluded=excluded
         )
         scores_df.to_csv(output_file, sep='\t', index=False)
+        del scores_df, df
+        gc.collect()
     else:
         func = partial(run_parallel_scoring, df, genes, output_file, excluded)
         with poolcontext(processes=processes) as pool:
             pool.map(func, scores_col)
+    click.echo('Scoring is complete.')
 
 
 def merge_matrices(
