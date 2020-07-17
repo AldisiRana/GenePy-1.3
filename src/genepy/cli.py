@@ -262,7 +262,7 @@ def calculate_pval(
         click.echo("Merging score files")
         scores_df = dd.read_csv(os.path.join(scores_file, '*.profile'), sep='\t')
     else:
-        scores_df = dd.read_csv(scores_file, sep='\t')
+        scores_df = dd.read_csv(scores_file)
     click.echo("The process for calculating the p_values will start now.")
     df = find_pvalue(
         scores_df=scores_df,
