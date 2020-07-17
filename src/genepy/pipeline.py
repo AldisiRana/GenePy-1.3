@@ -168,7 +168,7 @@ def find_pvalue(
     :param cases_column: the name of the column containing cases and controls information.
     :return: dataframe with genes and their p_values
     """
-    genotype_df = dd.read_csv(genotype_file, sep='\t', index_col=False)
+    genotype_df = dd.read_csv(genotype_file, sep='\t')
     merged_df = dd.merge(genotype_df, scores_df, on=samples_column, how='right')
     df_by_cases = merged_df.groupby(cases_column)
     cases = list(df_by_cases.groups.keys())

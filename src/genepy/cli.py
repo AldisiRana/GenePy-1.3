@@ -244,7 +244,7 @@ def normalize(
 @click.option('-t', '--test', required=True, type=click.Choice(['ttest_ind', 'mannwhitneyu', 'logit']),
               help='statistical test for calculating P value.')
 @click.option('-c', '--cases-column', required=True, help="the name of the column that contains the case/control type.")
-@click.option('-m', '--samples-column', required=True, help="the name of the column that contains the samples.")
+@click.option('-m', '--samples-column', required=True, help="the name of the column that contains the samples.", multiple=True)
 @click.option('-p', '--pc-file', default=None, help="Principle components values for logistic regression.")
 def calculate_pval(
     *,
@@ -262,7 +262,7 @@ def calculate_pval(
         click.echo("Merging score files")
         scores_df = dd.read_csv(os.path.join(scores_file, '*.profile'), sep='\t')
     else:
-        scores_df = dd.read_csv(scores_file, sep='\t', index_col=False)
+        scores_df = dd.read_csv(scores_file, sep='\t')
     click.echo("The process for calculating the p_values will start now.")
     df = find_pvalue(
         scores_df=scores_df,
