@@ -258,11 +258,12 @@ def calculate_pval(
     pc_file,
 ):
     """Calculate the P-value between two given groups."""
-    click.echo("The process for calculating the p_values will start now.")
     if os.path.isdir(scores_file):
-        scores_df = dd.read_csv(os.path.join(scores_file, '*'), sep='\t')
+        click.echo("Merging score files")
+        scores_df = dd.read_csv(os.path.join(scores_file, '*.profile'), sep='\t')
     else:
         scores_df = dd.read_csv(scores_file, sep='\t', index_col=False)
+    click.echo("The process for calculating the p_values will start now.")
     df = find_pvalue(
         scores_df=scores_df,
         output_file=output_file,
