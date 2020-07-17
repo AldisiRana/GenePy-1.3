@@ -171,6 +171,7 @@ def process_annotated_vcf(vcf):
             continue
         lines.append(row.decode('utf-8').strip('\n').split('\t'))
     df = pd.DataFrame(lines[1:], columns=lines[0])
+    del lines
     for ind, row in df.iterrows():
         for value in row['INFO'].split(';'):
             if len(value.split('=')) < 2:

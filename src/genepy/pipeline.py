@@ -5,6 +5,7 @@ import subprocess
 from functools import partial
 
 import click
+import dask.dataframe as dd
 import numpy as np
 import pandas as pd
 from pybiomart import Dataset
@@ -147,11 +148,12 @@ def normalize_gene_len(
 
 def find_pvalue(
     *,
-    scores_file,
+    scores_df,
     genotype_file,
     output_file,
     genes=None,
     cases_column,
+    samples_column,
     pc_file=None,
     test='mannwhitneyu',
 ):
@@ -159,16 +161,15 @@ def find_pvalue(
     Calculate the significance of a gene in a population using Mann-Whitney-U test.
     :param pc_file:
     :param test:
-    :param scores_file: a tsv file containing the scores of genes across samples.
+    :param scores_df: dataframe containing the scores of genes across samples.
     :param genotype_file: a file containing the information of the sample.
     :param output_file: a path to save the output file.
     :param genes: a list of the genes to calculate the significance. if None will calculate for all genes.
     :param cases_column: the name of the column containing cases and controls information.
     :return: dataframe with genes and their p_values
     """
-    scores_df = pd.read_csv(scores_file, sep='\t', index_col=False)
-    genotype_df = pd.read_csv(genotype_file, sep=' ', index_col=False)
-    merged_df = pd.merge(genotype_df, scores_df, on='patient_id', how='right')
+    genotype_df = dd.read_csv(genotype_file, sep='\t', index_col=False)
+    merged_df = dd.merge(genotype_df, scores_df, on=samples_column, how='right')
     df_by_cases = merged_df.groupby(cases_column)
     cases = list(df_by_cases.groups.keys())
     p_values = []

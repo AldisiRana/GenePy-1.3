@@ -4,6 +4,7 @@ import os
 import subprocess
 
 import click
+import dask.dataframe as dd
 import pandas as pd
 from functools import partial
 
@@ -243,6 +244,7 @@ def normalize(
 @click.option('-t', '--test', required=True, type=click.Choice(['ttest_ind', 'mannwhitneyu', 'logit']),
               help='statistical test for calculating P value.')
 @click.option('-c', '--cases-column', required=True, help="the name of the column that contains the case/control type.")
+@click.option('-m', '--samples-column', required=True, help="the name of the column that contains the samples.")
 @click.option('-p', '--pc-file', default=None, help="Principle components values for logistic regression.")
 def calculate_pval(
     *,
@@ -251,17 +253,23 @@ def calculate_pval(
     output_file,
     genes,
     cases_column,
+    samples_column,
     test,
     pc_file,
 ):
     """Calculate the P-value between two given groups."""
     click.echo("The process for calculating the p_values will start now.")
+    if os.path.isdir(scores_file):
+        scores_df = dd.read_csv(os.path.join(scores_file, '*'), sep='\t')
+    else:
+        scores_df = dd.read_csv(scores_file, sep='\t', index_col=False)
     df = find_pvalue(
-        scores_file=scores_file,
+        scores_df=scores_df,
         output_file=output_file,
         genotype_file=genotype_file,
         genes=genes,
         cases_column=cases_column,
+        samples_column=samples_column,
         test=test,
         pc_file=pc_file,
     )
