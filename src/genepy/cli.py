@@ -261,7 +261,6 @@ def calculate_pval(
     if os.path.isdir(scores_file):
         click.echo("Merging score files")
         scores_df = dd.read_csv(os.path.join(scores_file, '*.profile'), sep='\s+')
-        click.echo(scores_df.columns)
     else:
         scores_df = dd.read_csv(scores_file)
     click.echo("The process for calculating the p_values will start now.")
