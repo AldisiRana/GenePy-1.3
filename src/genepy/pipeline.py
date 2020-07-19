@@ -85,6 +85,9 @@ def merge_matrices(
     *,
     directory,
     output_path,
+    samples_col,
+    scores_col,
+    file_sep='\t'
 ):
     """
     Merges multiple files in a directory, each file should contain the score of a gene across the samples.
@@ -93,12 +96,12 @@ def merge_matrices(
     :param output_path: the path for the merged tsv file.
     :return: a dataframe combining all information from files.
     """
-    full_data = pd.DataFrame(data=None, columns=['patient_id'])
+    full_data = pd.DataFrame(data=None, columns=samples_col)
     for filename in tqdm(os.listdir(directory), desc="merging matrices"):
-        data = pd.read_csv(os.path.join(directory, filename), sep='\t',
-                           names=['patient_id', filename.split('_')[0], ''])
-        data = data.drop(columns=[''])
-        full_data = pd.merge(data, full_data, on='patient_id', how='left')
+        data = pd.read_csv(os.path.join(directory, filename), sep=file_sep, usecols=samples_col+[scores_col])
+        gene_name = filename.split('.')[0]
+        data = data.rename(columns={scores_col: gene_name})
+        full_data = pd.merge(data, full_data, on=samples_col, how='left')
     full_data.to_csv(output_path, sep='\t', index=False)
     return full_data
 
