@@ -200,6 +200,7 @@ def get_genepy_folder(
 
 @main.command()
 @click.option('-d', '--directory', required=True, help="The directory that contains the matrices to merge.")
+@click.option('-s', '--file-suffix', default='.tsv', help='The suffix of scores files in directory')
 @click.option('-o', '--output-path', required=True, help="The path to output the merged matrix.")
 @click.option('--samples-col', required=True, multiple=True, help="the name of samples column in matrices")
 @click.option('--scores-col', required=True, help="the name of scores column in matrices")
@@ -211,11 +212,13 @@ def merge(
     samples_col,
     scores_col,
     file_sep,
+    file_suffix,
 ):
     """This command merges all matrices in a directory into one big matrix"""
     click.echo("Starting the merging process")
     merge_matrices(
         directory=directory,
+        file_suffix=file_suffix,
         output_path=output_path,
         scores_col=scores_col,
         file_sep=file_sep,
