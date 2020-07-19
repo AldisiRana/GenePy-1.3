@@ -222,7 +222,7 @@ def merge(
         output_path=output_path,
         scores_col=scores_col,
         file_sep=file_sep,
-        samples_col=samples_col,
+        samples_col=list(samples_col),
     )
     click.echo("Merging is done.")
 
