@@ -249,7 +249,9 @@ def normalize(
 
 @main.command()
 @click.option('-s', '--scores-file', required=True, help="The scoring file of genes across a population.")
+@click.option('--scores-file-sep', default='\t', help="The file separator")
 @click.option('-i', '--genotype-file', required=True, help="File containing information about the cohort.")
+@click.option('--genotype-file-sep', default='\t', help="The file separator")
 @click.option('-o', '--output-file', required=True, help="The path to output the pvalues of genes.")
 @click.option('-g', '--genes',
               help="a list containing the genes to calculate. if not provided all genes will be used.")
@@ -268,18 +270,21 @@ def calculate_pval(
     samples_column,
     test,
     pc_file,
+    scores_file_sep,
+    genotype_file_sep,
 ):
     """Calculate the P-value between two given groups."""
     if os.path.isdir(scores_file):
         click.echo("Merging score files")
-        scores_df = dd.read_csv(os.path.join(scores_file, '*.profile'), sep='\s+')
+        scores_df = dd.read_csv(os.path.join(scores_file, '*.profile'), sep=scores_file_sep)
     else:
-        scores_df = dd.read_csv(scores_file)
+        scores_df = pd.read_csv(scores_file, sep=scores_file_sep)
     click.echo("The process for calculating the p_values will start now.")
     df = find_pvalue(
         scores_df=scores_df,
         output_file=output_file,
         genotype_file=genotype_file,
+        genotype_file_sep=genotype_file_sep,
         genes=genes,
         cases_column=cases_column,
         samples_column=samples_column,

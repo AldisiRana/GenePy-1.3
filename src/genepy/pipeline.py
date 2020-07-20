@@ -162,6 +162,7 @@ def find_pvalue(
     samples_column,
     pc_file=None,
     test='mannwhitneyu',
+    genotype_file_sep='\t',
 ):
     """
     Calculate the significance of a gene in a population using Mann-Whitney-U test.
@@ -174,8 +175,8 @@ def find_pvalue(
     :param cases_column: the name of the column containing cases and controls information.
     :return: dataframe with genes and their p_values
     """
-    genotype_df = dd.read_csv(genotype_file, sep='\t')
-    merged_df = dd.merge(genotype_df, scores_df, on=samples_column, how='right')
+    genotype_df = pd.read_csv(genotype_file, sep=genotype_file_sep)
+    merged_df = pd.merge(genotype_df, scores_df, on=samples_column, how='right')
     df_by_cases = merged_df.groupby(cases_column)
     cases = list(merged_df[cases_column].unique())
     p_values = []
