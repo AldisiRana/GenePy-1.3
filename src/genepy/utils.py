@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from multiprocessing import Pool
 import re
+from scipy.stats import beta
 
 from tqdm import tqdm
 
@@ -59,19 +60,30 @@ def preprocess_df(gene_df, score_col):
     return samples_df, scores, freqs
 
 
-def score_db(samples, score, freq):
+def score_db(*, samples, score, freq, weight_function='log10', a=1, b=25):
     # first make copies of the score and samples into S and db1, respectively
     s = np.copy(score)
     db1 = samples.to_numpy()
 
     out1 = []
-    for i in range(db1.shape[0]):
-        if ~np.isnan(s[i]):  # if deleteriousness score is available
-            deleter = float(s[i])  # store the score value into the into the deleter variable
-            db1[i][db1[i] == 0.5] = deleter * -np.log10(
-                float(freq[i, 0]) * float(freq[i, 1]))  # compute GenePy score for heterozygous variants
-            db1[i][db1[i] == 1] = deleter * -np.log10(float(freq[i, 1]) * float(freq[i, 1]))
-            out1.append(db1[i])  # compute GenePy score for homozygous variants
+    if weight_function == 'log10':
+        for i in range(db1.shape[0]):
+            if ~np.isnan(s[i]):  # if deleteriousness score is available
+                deleter = float(s[i])  # store the score value into the into the deleter variable
+                db1[i][db1[i] == 0.5] = deleter * -np.log10(
+                    float(freq[i, 0]) * float(freq[i, 1]))  # compute GenePy score for heterozygous variants
+                db1[i][db1[i] == 1] = deleter * -np.log10(float(freq[i, 1]) * float(freq[i, 1]))
+                out1.append(db1[i])  # compute GenePy score for homozygous variants
+    elif weight_function == 'beta':
+        for i in range(db1.shape[0]):
+            if ~np.isnan(s[i]):  # if deleteriousness score is available
+                deleter = float(s[i])  # store the score value into the into the deleter variable
+                db1[i][db1[i] == 0.5] = deleter * beta.pdf((
+                    float(freq[i, 0]) * float(freq[i, 1])), a, b)  # compute GenePy score for heterozygous variants
+                db1[i][db1[i] == 1] = deleter * beta.pdf((float(freq[i, 1]) * float(freq[i, 1])), a, b)
+                out1.append(db1[i])  # compute GenePy score for homozygous variants
+    else:
+        return Exception('The chosen weighting function is not available')
 
     out1 = np.array(out1)  # then these values will be stored into the out1 array.
     out1 = np.sum(out1, axis=0)  # the out1 is then condensed by suming the columns for each sample.
@@ -122,7 +134,10 @@ def score_genepy(
     genepy_meta,
     genes,
     score_col,
-    excluded=None
+    excluded=None,
+    weight_function='log10',
+    a=1,
+    b=25
 ):
     full_df = pd.DataFrame()
     for gene in tqdm(genes, desc='Getting scores for genes'):
@@ -134,7 +149,9 @@ def score_genepy(
                     f.write(gene + "\n")
             continue
         samples_df, scores, freqs = preprocess_df(gene_df, score_col)
-        scores_matrix = score_db(samples_df, scores, freqs)
+        scores_matrix = score_db(
+            samples=samples_df, score=scores, freq=freqs, weight_function=weight_function, a=a, b=b
+        )
         score_df = pd.DataFrame(scores_matrix, columns=['sample_id', gene])
         full_df = full_df.append(score_df)
         del gene_df, score_df, samples_df, scores, freqs

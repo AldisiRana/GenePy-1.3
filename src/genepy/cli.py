@@ -17,6 +17,14 @@ from .utils import cross_annotate_cadd, chunks, score_genepy, combine_genotype_a
     poolcontext
 
 
+OUTPUT_PATH = click.option('-o', '--output-path', required=True, help='the path for the output file.')
+WEIGHT_FUNCTION = click.option('--weight-function', default='log10', type=click.Choice(['log10', 'beta']),
+              help='the weighting function for allele frequency')
+A = click.option('-a', default=1.0, type=float, help='the alpha parameter for beta distribution')
+B = click.option('-b', default=25.0, type=float, help='the b parameter for beta distribution')
+PROCESSES = click.option('--processes', default=5, type=int, help='Number of processes to run in parallel.')
+SCORES_COL = click.option('--scores-col', required=True, help="the name of scores column in matrices")
+
 @click.group()
 def main():
     """Handle genepy functions."""
@@ -27,7 +35,7 @@ def main():
 @click.option('--annovar-ready-file', required=True, help='the annover prepared file.')
 @click.option('--annotated-file', required=True, help='the file with annotations.')
 @click.option('--caddout-file', default=None, help='the output file from CADD.')
-@click.option('--output-path', required=True, help='the path for the output file.')
+@OUTPUT_PATH
 def cross_annotate(
     *,
     vcf_file,
@@ -63,19 +71,25 @@ def cross_annotate(
 @click.option('--genepy-meta', required=True, help='The meta file with all variants and samples')
 @click.option('--output-dir', required=True, help='the directory path for all scores')
 @click.option('--gene-list', required=True, help='a list of all the genes to score')
-@click.option('--score-col', required=True, help='the name of the score column in genepy meta.')
+@SCORES_COL
 @click.option('--header', default=None, help='The file containing the header')
-@click.option('--processes', default=5, help='Number of processes to run in parallel.')
-@click.option('--chunk-size', default=400, help='the size of the chunk to split the genes.')
+@PROCESSES
+@click.option('--chunk-size', default=400, type=int, help='the size of the chunk to split the genes.')
+@WEIGHT_FUNCTION
+@A
+@B
 def get_genepy(
     *,
     genepy_meta,
     output_dir,
     gene_list,
-    score_col,
+    scores_col,
     header,
     processes,
     chunk_size,
+    weight_function,
+    a,
+    b,
 ):
     """
     Caluclate genepy scores of genes across the samples.
@@ -83,7 +97,7 @@ def get_genepy(
     :param genepy_meta: The meta file with all variants and samples
     :param output_dir: the directory path for all scores
     :param gene_list: a list of all the genes to score
-    :param score_col: the name of the score column in genepy meta.
+    :param scores_col: the name of the score column in genepy meta.
     :param header: the file containing the header
     :param processes: Number of processes to run in parallel.
     :param chunk_size: the size of the chunk to split the genes.
@@ -102,7 +116,7 @@ def get_genepy(
     excluded = output_dir+'.excluded'
     open(excluded, 'a').close()
     click.echo('Calculating genepy scores ... ')
-    func = partial(run_parallel_genes_meta, header, genepy_meta, score_col, output_dir, excluded)
+    func = partial(run_parallel_genes_meta, header, genepy_meta, scores_col, output_dir, excluded, weight_function, a, b)
     with poolcontext(processes=processes) as pool:
         pool.map(func, gene_chunks)
     return "Scores are ready in " + output_dir
@@ -117,11 +131,14 @@ def get_genepy(
               help='one or multiple del matrices', multiple=True)
 @click.option('--build', default='hg38', type=click.Choice(['hg18', 'hg19', 'hg38']),
               help='build version for annotations')
-@click.option('--output-file', required=True, help='path to outputfile')
-@click.option('--processes', default=24, help='Number of processes working in parallel.')
+@OUTPUT_PATH
+@PROCESSES
 @click.option('--annotated-vcf', is_flag=True)
 @click.option('--scores-col', default=['RawScore'], multiple=True, 
               help='if annotated-vcf, scores columns names must be provided')
+@WEIGHT_FUNCTION
+@A
+@B
 def get_genepy_folder(
     *,
     vcf_dir,
@@ -129,12 +146,15 @@ def get_genepy_folder(
     gene_list,
     del_matrix,
     build,
-    output_file,
+    output_path,
     processes,
     annotated_vcf,
     scores_col,
+    weight_function,
+    a,
+    b
 ):
-    excluded = output_file + '.excluded'
+    excluded = output_path + '.excluded'
     open(excluded, 'w').close()
     vcf_files = []
     for file in os.listdir(vcf_dir):
@@ -142,7 +162,7 @@ def get_genepy_folder(
             vcf_files.append(os.path.join(vcf_dir, file))
     if annotated_vcf:
         click.echo('processing annotated vcf files')
-        func = partial(parallel_annotated_vcf_prcoessing, gene_list, scores_col, output_file, excluded, processes)
+        func = partial(parallel_annotated_vcf_prcoessing, gene_list, scores_col, output_path, excluded, processes)
         with poolcontext(processes=processes) as pool:
             pool.map(func, vcf_files)
     else:
@@ -179,11 +199,19 @@ def get_genepy_folder(
                 )
                 if len(SCORES_TO_COL_NAMES[matrix]) == 1:
                     scores_df = score_genepy(
-                        genepy_meta=combined_df, genes=genes, score_col=SCORES_TO_COL_NAMES[matrix][0], excluded=excluded
+                        genepy_meta=combined_df,
+                        genes=genes,
+                        score_col=SCORES_TO_COL_NAMES[matrix][0],
+                        excluded=excluded,
+                        weight_function=weight_function,
+                        a=a,
+                        b=b,
                     )
-                    scores_df.to_csv(output_file, sep='\t', index=False)
+                    scores_df.to_csv(output_path, sep='\t', index=False)
                 else:
-                    func = partial(run_parallel_scoring, combined_df, genes, output_file, excluded)
+                    func = partial(
+                        run_parallel_scoring, combined_df, genes, output_path, excluded, weight_function, a, b
+                    )
                     with poolcontext(processes=processes) as pool:
                         pool.map(func, SCORES_TO_COL_NAMES[matrix])
         click.echo('Scoring is complete.')
@@ -201,9 +229,9 @@ def get_genepy_folder(
 @main.command()
 @click.option('-d', '--directory', required=True, help="The directory that contains the matrices to merge.")
 @click.option('-s', '--file-suffix', default='.tsv', help='The suffix of scores files in directory')
-@click.option('-o', '--output-path', required=True, help="The path to output the merged matrix.")
+@OUTPUT_PATH
 @click.option('--samples-col', required=True, multiple=True, help="the name of samples column in matrices")
-@click.option('--scores-col', required=True, help="the name of scores column in matrices")
+@SCORES_COL
 @click.option('--file-sep', default='\t', help="the seperator for scores files")
 def merge(
     *,
@@ -231,7 +259,7 @@ def merge(
 @click.option('-m', '--matrix-file', required=True, help="The scoring matrix to normalize.")
 @click.option('-g', '--genes-lengths-file',
               help="The file containing the lengths of genes. If not provided it will be produced.")
-@click.option('-o', '--output-path', required=True, help="The path to output the normalized matrix.")
+@OUTPUT_PATH
 def normalize(
     *,
     matrix_file,
@@ -252,7 +280,7 @@ def normalize(
 @click.option('--scores-file-sep', default='\t', help="The file separator")
 @click.option('-i', '--genotype-file', required=True, help="File containing information about the cohort.")
 @click.option('--genotype-file-sep', default='\t', help="The file separator")
-@click.option('-o', '--output-file', required=True, help="The path to output the pvalues of genes.")
+@OUTPUT_PATH
 @click.option('-g', '--genes',
               help="a list containing the genes to calculate. if not provided all genes will be used.")
 @click.option('-t', '--test', required=True, type=click.Choice(['ttest_ind', 'mannwhitneyu', 'logit']),

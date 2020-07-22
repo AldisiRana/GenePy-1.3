@@ -18,7 +18,7 @@ from .utils import preprocess_df, score_db, score_genepy, process_annotated_vcf,
     poolcontext
 
 
-def run_parallel_genes_meta(header, meta_data, score_col, output_dir, excluded, genes):
+def run_parallel_genes_meta(header, meta_data, score_col, output_dir, excluded, weight_function, a, b, genes):
     for gene in genes:
         if os.path.isfile(os.path.join(output_dir, gene+'_'+score_col+'_matrix')):
             click.echo('Scoring matrix exists!')
@@ -40,7 +40,8 @@ def run_parallel_genes_meta(header, meta_data, score_col, output_dir, excluded, 
             p = subprocess.call(['rm', gene + '.meta'])
             continue
         samples_df, scores, freqs = preprocess_df(gene_df, score_col)
-        scores_matrix = score_db(samples_df, scores, freqs)
+        scores_matrix = score_db(
+            samples=samples_df, score=scores, freq=freqs, weight_function=weight_function, a=a, b=b)
         path = os.path.join(output_dir, gene+'_'+score_col+'_matrix')
         np.savetxt(path, scores_matrix, fmt='%s', delimiter='\t')
         p = subprocess.call(['rm', gene+'.meta'])
@@ -50,9 +51,15 @@ def run_parallel_annovar(del_m, build, output_dir, vcf):
     process_annovar(vcf, del_m, build, output_dir)
 
 
-def run_parallel_scoring(combined_df, genes, output_file, excluded, score_col):
+def run_parallel_scoring(combined_df, genes, output_file, excluded, weight_function, a, b, score_col):
     scores_df = score_genepy(
-        genepy_meta=combined_df, genes=genes, score_col=score_col, excluded=excluded
+        genepy_meta=combined_df,
+        genes=genes,
+        score_col=score_col,
+        excluded=excluded,
+        weight_function=weight_function,
+        a=a,
+        b=b,
     )
     scores_df.to_csv(score_col + output_file, sep='\t', index=False)
 
