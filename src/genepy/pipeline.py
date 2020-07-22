@@ -120,6 +120,7 @@ def normalize_gene_len(
     *,
     genes_lengths_file=None,
     matrix_file,
+    samples_col,
     file_sep='\t',
     output_path,
 ):
@@ -146,7 +147,7 @@ def normalize_gene_len(
     scores_df = pd.read_csv(matrix_file, sep=file_sep)
     unnormalized = []
     for (name, data) in tqdm(scores_df.iteritems(), desc="Normalizing genes scores"):
-        if name == 'patient_id':
+        if name == samples_col:
             continue
         if name not in genes_lengths.keys():
             unnormalized.append(name)

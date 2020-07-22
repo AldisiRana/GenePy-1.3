@@ -262,12 +262,14 @@ def merge(
               help="The file containing the lengths of genes. If not provided it will be produced.")
 @OUTPUT_PATH
 @FILE_SEP
+@click.option('-s', '--samples-col', default='patient_id', help='the name of the samples column')
 def normalize(
     *,
     matrix_file,
     genes_lengths_file=None,
     output_path=None,
-    file_sep='\t'
+    file_sep='\t',
+    samples_col
 ):
     """This command normalizes the scoring matrix by gene length."""
     click.echo("Normalization in process.")
@@ -276,6 +278,7 @@ def normalize(
         file_sep=file_sep,
         genes_lengths_file=genes_lengths_file,
         output_path=output_path,
+        samples_col=samples_col
     )
 
 
