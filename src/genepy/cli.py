@@ -24,6 +24,7 @@ A = click.option('-a', default=1.0, type=float, help='the alpha parameter for be
 B = click.option('-b', default=25.0, type=float, help='the b parameter for beta distribution')
 PROCESSES = click.option('--processes', default=5, type=int, help='Number of processes to run in parallel.')
 SCORES_COL = click.option('--scores-col', required=True, help="the name of scores column in matrices")
+FILE_SEP = click.option('--file-sep', default='\t', help="the seperator for scores files")
 
 @click.group()
 def main():
@@ -232,7 +233,7 @@ def get_genepy_folder(
 @OUTPUT_PATH
 @click.option('--samples-col', required=True, multiple=True, help="the name of samples column in matrices")
 @SCORES_COL
-@click.option('--file-sep', default='\t', help="the seperator for scores files")
+@FILE_SEP
 def merge(
     *,
     directory,
@@ -260,16 +261,19 @@ def merge(
 @click.option('-g', '--genes-lengths-file',
               help="The file containing the lengths of genes. If not provided it will be produced.")
 @OUTPUT_PATH
+@FILE_SEP
 def normalize(
     *,
     matrix_file,
     genes_lengths_file=None,
-    output_path=None
+    output_path=None,
+    file_sep='\t'
 ):
     """This command normalizes the scoring matrix by gene length."""
     click.echo("Normalization in process.")
     normalize_gene_len(
         matrix_file=matrix_file,
+        file_sep=file_sep,
         genes_lengths_file=genes_lengths_file,
         output_path=output_path,
     )
@@ -277,7 +281,7 @@ def normalize(
 
 @main.command()
 @click.option('-s', '--scores-file', required=True, help="The scoring file of genes across a population.")
-@click.option('--scores-file-sep', default='\t', help="The file separator")
+@FILE_SEP
 @click.option('-i', '--genotype-file', required=True, help="File containing information about the cohort.")
 @click.option('--genotype-file-sep', default='\t', help="The file separator")
 @OUTPUT_PATH
