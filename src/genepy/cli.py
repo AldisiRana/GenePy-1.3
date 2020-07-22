@@ -296,7 +296,7 @@ def calculate_pval(
     *,
     scores_file,
     genotype_file,
-    output_file,
+    output_path,
     genes,
     cases_column,
     samples_column,
@@ -315,7 +315,7 @@ def calculate_pval(
     click.echo("The process for calculating the p_values will start now.")
     df = find_pvalue(
         scores_df=scores_df,
-        output_file=output_file,
+        output_file=output_path,
         genotype_file=genotype_file,
         genotype_file_sep=genotype_file_sep,
         genes=genes,
