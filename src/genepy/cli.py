@@ -281,7 +281,7 @@ def normalize(
 
 @main.command()
 @click.option('-s', '--scores-file', required=True, help="The scoring file of genes across a population.")
-@FILE_SEP
+@click.option('--scores-file-sep', default='\t', help="the seperator for scores files")
 @click.option('-i', '--genotype-file', required=True, help="File containing information about the cohort.")
 @click.option('--genotype-file-sep', default='\t', help="The file separator")
 @OUTPUT_PATH
