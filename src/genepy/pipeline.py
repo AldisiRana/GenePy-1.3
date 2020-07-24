@@ -196,7 +196,7 @@ def find_pvalue(
             case_0 = df_by_cases.get_group(cases[0])[gene].tolist()
             case_1 = df_by_cases.get_group(cases[1])[gene].tolist()
             try:
-                u_statistic, p_val = stats.mannwhitneyu(case_0, case_1)
+                u_statistic, p_val = stats.mannwhitneyu(case_0, case_1, alternative='greater')
             except:
                 continue
             p_values.append([gene, u_statistic, p_val])
