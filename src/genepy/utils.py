@@ -5,7 +5,7 @@ from contextlib import contextmanager
 import click
 import gc
 import numpy as np
-import pandas as pd
+import modin.pandas as pd
 from multiprocessing import Pool
 import re
 from scipy.stats import beta
@@ -182,13 +182,13 @@ def process_annotated_vcf(vcf):
         file_gen = gzip_reader(vcf)
     else:
         file_gen = file_reader(vcf)
-    lines = []
-    for row in tqdm(file_gen):
+    i = 0
+    for row in file_gen:
         if row.startswith(b'##'):
-            continue
-        lines.append(row.decode('utf-8').strip('\n').split('\t'))
-    df = pd.DataFrame(lines[1:], columns=lines[0])
-    del lines
+            i += 1
+        else:
+            break
+    df = pd.read_csv(vcf, skiprows=i, sep='\t')
     for ind, row in df.iterrows():
         for value in row['INFO'].split(';'):
             if len(value.split('=')) < 2:
