@@ -178,6 +178,7 @@ def file_reader(file_name):
 
 
 def process_annotated_vcf(vcf):
+    click.echo('processing ' + vcf)
     if vcf.endswith('.gz'):
         file_gen = gzip_reader(vcf)
     else:

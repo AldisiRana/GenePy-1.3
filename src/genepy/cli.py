@@ -166,6 +166,7 @@ def get_genepy_folder(
         func = partial(parallel_annotated_vcf_prcoessing, gene_list, scores_col, output_path, excluded, processes)
         with poolcontext(processes=processes) as pool:
             pool.map(func, vcf_files)
+        click.echo('genepy scoring is done.')
     else:
         del_anno_folder = click.confirm("Delete annotations folder before program termination?", abort=False)
         del_temp = True
