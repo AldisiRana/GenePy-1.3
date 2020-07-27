@@ -313,7 +313,7 @@ def calculate_pval(
         click.echo("Merging score files")
         scores_df = dd.read_csv(os.path.join(scores_file, '*.profile'), sep=scores_file_sep)
     else:
-        scores_df = pd.read_csv(scores_file, sep=scores_file_sep)
+        scores_df = pd.read_csv(scores_file, sep=scores_file_sep, dtype='float32')
 
     click.echo("The process for calculating the p_values will start now.")
     df = find_pvalue(
