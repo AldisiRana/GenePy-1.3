@@ -190,7 +190,7 @@ def process_annotated_vcf(vcf):
         else:
             break
     df = pd.read_csv(vcf, skiprows=i, sep='\t')
-    for ind, row in df.iterrows():
+    for ind, row in tqdm(df.iterrows(), desc='Editing ' + vcf):
         for value in row['INFO'].split(';'):
             if len(value.split('=')) < 2:
                 continue
