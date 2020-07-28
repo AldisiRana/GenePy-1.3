@@ -242,7 +242,7 @@ def merge(
     samples_col,
     scores_col,
     file_sep,
-    file_suffix,
+    file_suffix
 ):
     """This command merges all matrices in a directory into one big matrix"""
     click.echo("Starting the merging process")
@@ -307,7 +307,7 @@ def calculate_pval(
     test,
     pc_file,
     scores_file_sep,
-    genotype_file_sep,
+    genotype_file_sep
 ):
     """Calculate the P-value between two given groups."""
     if os.path.isdir(scores_file):
