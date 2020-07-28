@@ -5,7 +5,6 @@ import subprocess
 from functools import partial
 
 import click
-import dask.dataframe as dd
 import numpy as np
 import pandas as pd
 from pybiomart import Dataset
