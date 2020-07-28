@@ -90,7 +90,7 @@ def get_genepy(
     chunk_size,
     weight_function,
     a,
-    b,
+    b
 ):
     """
     Caluclate genepy scores of genes across the samples.
