@@ -4,7 +4,6 @@ import os
 import subprocess
 
 import click
-import dask.dataframe as dd
 import pandas as pd
 from functools import partial
 
@@ -310,11 +309,7 @@ def calculate_pval(
     genotype_file_sep
 ):
     """Calculate the P-value between two given groups."""
-    if os.path.isdir(scores_file):
-        click.echo("Merging score files")
-        scores_df = dd.read_csv(os.path.join(scores_file, '*.profile'), sep=scores_file_sep)
-    else:
-        scores_df = pd.read_csv(scores_file, sep=scores_file_sep, dtype='float32')
+    scores_df = pd.read_csv(scores_file, sep=scores_file_sep, dtype='float32')
 
     click.echo("The process for calculating the p_values will start now.")
     df = find_pvalue(
