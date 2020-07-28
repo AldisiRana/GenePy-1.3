@@ -96,7 +96,7 @@ def merge_matrices(
     samples_col,
     scores_col,
     file_sep='\t',
-    file_suffix='.tsv',
+    file_suffix='.tsv'
 ):
     """
     Merges multiple files in a directory, each file should contain the score of a gene across the samples.
@@ -123,7 +123,7 @@ def normalize_gene_len(
     matrix_file,
     samples_col,
     file_sep='\t',
-    output_path,
+    output_path
 ):
     """
     Normalize matrix by gene length.
@@ -172,7 +172,7 @@ def find_pvalue(
     samples_column,
     pc_file=None,
     test='mannwhitneyu',
-    genotype_file_sep='\t',
+    genotype_file_sep='\t'
 ):
     """
     Calculate the significance of a gene in a population using Mann-Whitney-U test.

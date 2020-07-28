@@ -16,7 +16,7 @@ from tqdm import tqdm
 def cross_annotate_cadd(
     *,
     freq_df,
-    cadd_df,
+    cadd_df
 ):
     freq = [(val[0], val[1], val[2], val[3]) for val in freq_df.values]
     cadd = {
@@ -103,7 +103,7 @@ def combine_genotype_annotation(
     vcf_file,
     annovar_ready_file,
     annotated_file,
-    scores_col,
+    scores_col
 ):
     if vcf_file.endswith('.gz'):
         with gzip.open(vcf_file, 'rb') as f:
