@@ -74,11 +74,12 @@ def parallel_annotated_vcf_prcoessing(gene_list, scores_col, output_file, exclud
         genes = list(gene_list['Gene.refGene'].unique())
         if '.' in genes:
             genes.remove('.')
+    name = vcf.split('.')[0]
     if len(scores_col) == 1:
         scores_df = score_genepy(
             genepy_meta=df, genes=genes, score_col=scores_col[0], excluded=excluded
         )
-        scores_df.to_csv(output_file, sep='\t', index=False)
+        scores_df.to_csv(output_file + name, sep='\t', index=False)
         del scores_df, df
         gc.collect()
     else:
