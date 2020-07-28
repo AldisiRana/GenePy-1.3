@@ -5,7 +5,7 @@ from contextlib import contextmanager
 import click
 import gc
 import numpy as np
-import modin.pandas as pd
+import pandas as pd
 from multiprocessing import Pool
 import re
 from scipy.stats import beta
