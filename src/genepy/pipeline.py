@@ -187,7 +187,7 @@ def find_pvalue(
     genotype_df = pd.read_csv(genotype_file, sep=genotype_file_sep, usecols=[samples_column, cases_column])
     merged_df = pd.merge(genotype_df, scores_df, on=samples_column, how='right')
     df_by_cases = merged_df.groupby(cases_column)
-    cases = list(merged_df[cases_column].unique())
+    cases = list(df_by_cases.groups.keys())
     p_values = []
     if genes is None:
         genes = scores_df.columns.tolist()[1:]
