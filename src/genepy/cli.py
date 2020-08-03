@@ -164,7 +164,7 @@ def get_genepy_folder(
         click.echo('processing annotated vcf files')
         func = partial(parallel_annotated_vcf_prcoessing, scores_col, output_path, processes)
         pool = ThreadPool(processes=processes)
-        pool.apply_async(func, vcf_files)
+        pool.apply_async(func, (vcf_files,))
         click.echo('genepy scoring is done.')
     else:
         excluded = output_path + '.excluded'
