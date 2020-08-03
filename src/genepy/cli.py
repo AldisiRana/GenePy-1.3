@@ -158,7 +158,7 @@ def get_genepy_folder(
         if file.endswith(('gvcf.gz', '.vcf', 'vcf.gz', 'gvcf', 'gz')):
             vcf_files.append(os.path.join(vcf_dir, file))
     if annotated_vcf:
-        processes = processes % 2
+        processes = int(processes/2)
         click.echo('processing annotated vcf files')
         func = partial(parallel_annotated_vcf_prcoessing, scores_col[0], output_path, processes)
         with threadcontext(processes=processes) as threadpool:
