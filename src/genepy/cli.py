@@ -154,19 +154,20 @@ def get_genepy_folder(
     a,
     b
 ):
-    excluded = output_path + '.excluded'
-    open(excluded, 'w').close()
     vcf_files = []
     for file in os.listdir(vcf_dir):
         if file.endswith(('gvcf.gz', '.vcf', 'vcf.gz', 'gvcf', 'gz')):
             vcf_files.append(os.path.join(vcf_dir, file))
     if annotated_vcf:
+        processes = processes % 2
         click.echo('processing annotated vcf files')
-        func = partial(parallel_annotated_vcf_prcoessing, gene_list, scores_col, output_path, excluded, processes)
+        func = partial(parallel_annotated_vcf_prcoessing, scores_col, output_path, processes)
         with poolcontext(processes=processes) as pool:
             pool.map(func, vcf_files)
         click.echo('genepy scoring is done.')
     else:
+        excluded = output_path + '.excluded'
+        open(excluded, 'w').close()
         del_anno_folder = click.confirm("Delete annotations folder before program termination?", abort=False)
         del_temp = True
         if not del_anno_folder:

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import gzip
 import os
 import subprocess
 from functools import partial
@@ -14,7 +14,7 @@ from tqdm import tqdm
 import gc
 
 from .utils import preprocess_df, score_db, score_genepy, process_annotated_vcf, \
-    poolcontext
+    poolcontext, gzip_reader, parallel_line_scoring
 
 
 def run_parallel_genes_meta(header, meta_data, score_col, output_dir, excluded, weight_function, a, b, genes):
@@ -63,29 +63,35 @@ def run_parallel_scoring(combined_df, genes, output_file, excluded, weight_funct
     scores_df.to_csv(score_col + output_file, sep='\t', index=False)
 
 
-def parallel_annotated_vcf_prcoessing(gene_list, scores_col, output_file, excluded, processes, vcf):
-    df = process_annotated_vcf(vcf)
-    if gene_list:
-        with open(gene_list) as file:
-            genes = [line.rstrip('\n').encode() for line in file]
-    else:
-        click.echo('Creating genes list')
-        genes = list(gene_list['Gene.refGene'].unique())
-        if '.' in genes:
-            genes.remove('.')
-    name = vcf.split('.')[0]
-    if len(scores_col) == 1:
-        scores_df = score_genepy(
-            genepy_meta=df, genes=genes, score_col=scores_col[0], excluded=excluded
-        )
-        scores_df.to_csv(output_file + name, sep='\t', index=False)
-        del scores_df, df
-        gc.collect()
-    else:
-        func = partial(run_parallel_scoring, df, genes, output_file, excluded)
-        with poolcontext(processes=processes) as pool:
-            pool.map(func, scores_col)
-    click.echo('Scoring is complete.')
+def parallel_annotated_vcf_prcoessing(scores_col, output_file, processes, vcf):
+    file_gen = gzip_reader(vcf)
+    for row in file_gen:
+        if row.startswith(b'##'):
+            continue
+        elif row.startswith(b'#'):
+            header = row.decode("utf-8").strip('\n').split('\t')
+            samples = header[header.index('FORMAT') + 1:]
+            break
+    df = pd.DataFrame(samples, columns=['sample_id'])
+    with gzip.open(vcf, 'rb') as f:
+        while True:
+            lines = f.readlines(100000000)
+            if not lines:
+                break
+            func = partial(parallel_line_scoring, scores_col, header)
+            with poolcontext(processes=processes) as pool:
+                print('processing file chunk ...')
+                p = pool.map(func, lines)
+                for tup in tqdm(p, desc='Combining scores to df'):
+                    if not tup:
+                        continue
+                    gene = tup[1]
+                    scores_df = tup[0]
+                    if gene in df.columns:
+                        df[gene] = df[gene] + scores_df[gene]
+                    else:
+                        df = pd.merge(df, scores_df, on='sample_id')
+                df.to_csv(vcf.split('.')[0]+output_file, sep='\t', index=False)
 
 
 def merge_matrices(

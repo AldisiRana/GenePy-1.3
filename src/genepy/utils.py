@@ -177,29 +177,38 @@ def file_reader(file_name):
         yield row
 
 
-def process_annotated_vcf(vcf):
-    click.echo('processing ' + vcf)
-    if vcf.endswith('.gz'):
-        file_gen = gzip_reader(vcf)
+def parallel_line_scoring(scores_col, header, row):
+    if row.startswith(b'##'):
+        return
+    elif row.startswith(b'#'):
+        return
     else:
-        file_gen = file_reader(vcf)
-    i = 0
-    for row in file_gen:
-        if row.startswith(b'##'):
-            i += 1
-        else:
-            break
-    df = pd.read_csv(vcf, skiprows=i, sep='\t')
-    for ind, row in tqdm(df.iterrows(), desc='Editing ' + vcf):
-        for value in row['INFO'].split(';'):
-            if len(value.split('=')) < 2:
+        row_dict = {}
+        row_split = row.decode("utf-8").strip('\n').split('\t')
+        for i, col in enumerate(header):
+            if col == 'INFO':
+                for l in row_split[i].split(';'):
+                    if l.startswith('AF='):
+                        row_dict['AF'] = l.split('=')[1]
+                    if l.startswith(scores_col+'='):
+                        row_dict[scores_col] = float(l.split('=')[1])
+                    if l.startswith('gene'):
+                        row_dict['gene'] = l.split('=')[1]
+                    continue
+            elif not re.search('\d', col):
                 continue
-            if value.split('=')[0] not in df.columns:
-                df[value.split('=')[0]] = "NaN"
-            df.at[ind, value.split('=')[0]] = value.split('=')[1]
-    df = df.drop(columns=['INFO'])
-    df = df.rename(columns={"gene": 'Gene.refGene'})
-    return df
+            row_dict[col] = row_split[i]
+        if 'RawScore' not in row_dict.keys():
+            return
+        if 'gene' not in row_dict.keys():
+            return
+        if 'AF' not in row_dict.keys():
+            row_dict['AF'] = '.'
+        df_02 = pd.DataFrame(row_dict, index=[0])
+    samples_df, scores, freqs = preprocess_df(df_02, 'RawScore')
+    scores_matrix = score_db(samples=samples_df, score=scores, freq=freqs)
+    scores_df = pd.DataFrame(scores_matrix, columns=['sample_id', row_dict['gene']])
+    return scores_df, row_dict['gene']
 
 
 @contextmanager
