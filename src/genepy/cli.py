@@ -160,7 +160,7 @@ def get_genepy_folder(
     if annotated_vcf:
         processes = processes % 2
         click.echo('processing annotated vcf files')
-        func = partial(parallel_annotated_vcf_prcoessing, scores_col, output_path, processes)
+        func = partial(parallel_annotated_vcf_prcoessing, scores_col[0], output_path, processes)
         with threadcontext(processes=processes) as threadpool:
             threadpool.map(func, vcf_files)
         click.echo('genepy scoring is done.')
