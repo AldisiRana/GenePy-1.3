@@ -7,6 +7,7 @@ import gc
 import numpy as np
 import pandas as pd
 from multiprocessing import Pool
+from multiprocessing.pool import ThreadPool
 import re
 from scipy.stats import beta
 
@@ -216,3 +217,11 @@ def poolcontext(*args, **kwargs):
     pool = Pool(*args, **kwargs)
     yield pool
     pool.terminate()
+
+
+@contextmanager
+def threadcontext(*args, **kwargs):
+    pool = ThreadPool(*args, **kwargs)
+    yield pool
+    pool.terminate()
+
