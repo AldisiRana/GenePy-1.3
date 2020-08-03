@@ -79,7 +79,7 @@ def parallel_annotated_vcf_prcoessing(scores_col, output_file, processes, vcf):
             func = partial(parallel_line_scoring, scores_col, header)
             with poolcontext(processes=processes) as pool:
                 print('processing file chunk ...')
-                p = pool.map(func, (lines,))
+                p = pool.map(func, lines)
                 for tup in tqdm(p, desc='Combining scores to df'):
                     if not tup:
                         continue
