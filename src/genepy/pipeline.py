@@ -11,10 +11,8 @@ from pybiomart import Dataset
 import scipy.stats as stats
 import statsmodels.api as sm
 from tqdm import tqdm
-import gc
 
-from .utils import preprocess_df, score_db, score_genepy, process_annotated_vcf, \
-    poolcontext, gzip_reader, parallel_line_scoring
+from .utils import preprocess_df, score_db, score_genepy, poolcontext, gzip_reader, parallel_line_scoring
 
 
 def run_parallel_genes_meta(header, meta_data, score_col, output_dir, excluded, weight_function, a, b, genes):
