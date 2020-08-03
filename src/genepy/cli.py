@@ -6,6 +6,7 @@ import subprocess
 import click
 import pandas as pd
 from functools import partial
+from multiprocessing.pool import ThreadPool
 
 from tqdm import tqdm
 
@@ -162,8 +163,8 @@ def get_genepy_folder(
         processes = processes % 2
         click.echo('processing annotated vcf files')
         func = partial(parallel_annotated_vcf_prcoessing, scores_col, output_path, processes)
-        with poolcontext(processes=processes) as pool:
-            pool.map(func, vcf_files)
+        pool = ThreadPool(processes=processes)
+        pool.apply_async(func, vcf_files)
         click.echo('genepy scoring is done.')
     else:
         excluded = output_path + '.excluded'
