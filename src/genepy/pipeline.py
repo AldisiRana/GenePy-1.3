@@ -61,7 +61,7 @@ def run_parallel_scoring(combined_df, genes, output_file, excluded, weight_funct
     scores_df.to_csv(score_col + output_file, sep='\t', index=False)
 
 
-def parallel_annotated_vcf_prcoessing(scores_col, output_file, processes, vcf):
+def annotated_vcf_prcoessing(*, scores_col, output_file, processes, vcf, weight_function, a, b):
     file_gen = gzip_reader(vcf)
     for row in file_gen:
         if row.startswith(b'##'):
@@ -76,7 +76,7 @@ def parallel_annotated_vcf_prcoessing(scores_col, output_file, processes, vcf):
             lines = f.readlines(100000000)
             if not lines:
                 break
-            func = partial(parallel_line_scoring, scores_col, header)
+            func = partial(parallel_line_scoring, scores_col, header, weight_function, a, b)
             with poolcontext(processes=processes) as pool:
                 print('processing file chunk ...')
                 p = pool.map(func, lines)
@@ -90,6 +90,7 @@ def parallel_annotated_vcf_prcoessing(scores_col, output_file, processes, vcf):
                     else:
                         df = pd.merge(df, scores_df, on='sample_id')
                 df.to_csv(vcf.split('.')[0]+output_file, sep='\t', index=False)
+    return df
 
 
 def merge_matrices(

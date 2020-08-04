@@ -179,7 +179,7 @@ def file_reader(file_name):
         yield row
 
 
-def parallel_line_scoring(scores_col, header, row):
+def parallel_line_scoring(scores_col, header, weight_function, a, b, row):
     if row.startswith(b'##'):
         return
     elif row.startswith(b'#'):
@@ -208,7 +208,7 @@ def parallel_line_scoring(scores_col, header, row):
             row_dict['AF'] = '.'
         df_02 = pd.DataFrame(row_dict, index=[0])
     samples_df, scores, freqs = preprocess_df(df_02, 'RawScore')
-    scores_matrix = score_db(samples=samples_df, score=scores, freq=freqs)
+    scores_matrix = score_db(samples=samples_df, score=scores, freq=freqs, weight_function=weight_function, a=a, b=b)
     scores_df = pd.DataFrame(scores_matrix, columns=['sample_id', row_dict['gene']])
     return scores_df, row_dict['gene']
 
