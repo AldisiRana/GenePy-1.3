@@ -89,7 +89,7 @@ def annotated_vcf_prcoessing(*, scores_col, output_file, processes, vcf, weight_
                         df[gene] = df[gene] + scores_df[gene]
                     else:
                         df = pd.merge(df, scores_df, on='sample_id')
-                df.to_csv(vcf.split('.')[0]+output_file, sep='\t', index=False)
+    df.to_csv(output_file, sep='\t', index=False)
     return df
 
 
