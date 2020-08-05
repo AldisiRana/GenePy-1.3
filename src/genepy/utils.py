@@ -36,7 +36,7 @@ def cross_annotate_cadd(
     return scores.values()
 
 
-def preprocess_df(gene_df, score_col, af_col):
+def preprocess_df(gene_df, score_col, af_col='AF'):
     scores = np.array(gene_df[score_col])
     scores = scores.astype('float')
     scores = (scores - (-7.535037)) / (35.788538 - (-7.535037))
