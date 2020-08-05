@@ -26,8 +26,10 @@ def run_parallel_genes_meta(header, meta_data, score_col, af_col, output_dir, ex
                 p = subprocess.call('grep -E "\W'+gene+';?\s" '+meta_data, stdout=file, shell=True)
         gene_df = pd.read_csv(gene+'.meta', sep='\t', index_col=False)
         if gene_df.empty:
-            click.echo("Error! Gene not found!")
+            click.echo("Error!" + gene + " not found!")
             p = subprocess.call(['rm', gene + '.meta'])
+            with open(excluded, "a") as f:
+                f.write(gene + "\n")
             continue
         gene_df[score_col].replace('.', np.nan)
         if gene_df[score_col].isnull().all():
