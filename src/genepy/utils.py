@@ -36,7 +36,7 @@ def cross_annotate_cadd(
     return scores.values()
 
 
-def preprocess_df(gene_df, score_col):
+def preprocess_df(gene_df, score_col, af_col):
     scores = np.array(gene_df[score_col])
     scores = scores.astype('float')
     scores = (scores - (-7.535037)) / (35.788538 - (-7.535037))
@@ -45,7 +45,7 @@ def preprocess_df(gene_df, score_col):
     gene_df = gene_df.replace(to_replace='0/[123456789]+', value=1, regex=True)
     gene_df = gene_df.replace(to_replace='[123456789]/[123456789]', value=2, regex=True)
     gene_df = gene_df.replace(to_replace='\./\.[\S]*', value=0, regex=True)
-    known_fa_all = np.array(gene_df['AF'])
+    known_fa_all = np.array(gene_df[af_col])
     known_fa_all[known_fa_all == '.'] = np.nan
     known_fa_all = known_fa_all.astype('float')
     freqs = np.zeros((gene_df.shape[0], 2))

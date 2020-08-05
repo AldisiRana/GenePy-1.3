@@ -71,6 +71,7 @@ def cross_annotate(
 @click.option('--output-dir', required=True, help='the directory path for all scores')
 @click.option('--gene-list', required=True, help='a list of all the genes to score')
 @SCORES_COL
+@click.option('--af-col', default='AF', help='The name of the column with allele frequencies')
 @click.option('--header', default=None, help='The file containing the header')
 @PROCESSES
 @click.option('--chunk-size', default=400, type=int, help='the size of the chunk to split the genes.')
@@ -83,6 +84,7 @@ def get_genepy(
     output_dir,
     gene_list,
     scores_col,
+    af_col,
     header,
     processes,
     chunk_size,
@@ -115,7 +117,9 @@ def get_genepy(
     excluded = output_dir+'.excluded'
     open(excluded, 'a').close()
     click.echo('Calculating genepy scores ... ')
-    func = partial(run_parallel_genes_meta, header, genepy_meta, scores_col, output_dir, excluded, weight_function, a, b)
+    func = partial(
+        run_parallel_genes_meta, header, genepy_meta, scores_col, af_col, output_dir, excluded, weight_function, a, b
+    )
     with poolcontext(processes=processes) as pool:
         pool.map(func, gene_chunks)
     return "Scores are ready in " + output_dir

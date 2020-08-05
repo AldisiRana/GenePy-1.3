@@ -15,7 +15,7 @@ from tqdm import tqdm
 from .utils import preprocess_df, score_db, score_genepy, poolcontext, gzip_reader, parallel_line_scoring
 
 
-def run_parallel_genes_meta(header, meta_data, score_col, output_dir, excluded, weight_function, a, b, genes):
+def run_parallel_genes_meta(header, meta_data, score_col, af_col, output_dir, excluded, weight_function, a, b, genes):
     for gene in genes:
         if os.path.isfile(os.path.join(output_dir, gene+'_'+score_col+'_matrix')):
             click.echo('Scoring matrix exists!')
@@ -36,7 +36,7 @@ def run_parallel_genes_meta(header, meta_data, score_col, output_dir, excluded, 
             click.echo('Gene does not have deleteriousness score!')
             p = subprocess.call(['rm', gene + '.meta'])
             continue
-        samples_df, scores, freqs = preprocess_df(gene_df, score_col)
+        samples_df, scores, freqs = preprocess_df(gene_df, score_col, af_col)
         scores_matrix = score_db(
             samples=samples_df, score=scores, freq=freqs, weight_function=weight_function, a=a, b=b)
         path = os.path.join(output_dir, gene+'_'+score_col+'_matrix')
