@@ -238,6 +238,26 @@ def find_pvalue(
         p_values_df = pd.DataFrame(
             p_values, columns=['genes', 'const_pval', 'p_value', 'PC1_pval', 'PC2_pvcal', 'PC3_pval']
         ).sort_values(by=['p_value'])
+    elif test == 'glm':
+        if not pc_file:
+            raise Exception("Need principle components file.")
+        pc_df = pd.read_csv(pc_file, sep='\t', index_col=False)
+        merged_df = pd.merge(merged_df, pc_df, on='patient_id')
+        for gene in tqdm(genes, desc='Calculating p_values for genes'):
+            X = merged_df[[gene, 'PC1', 'PC2', 'PC3']]
+            X = sm.add_constant(X)
+            Y = merged_df[[cases_column]]
+            try:
+                glm_model = sm.GLM(Y, X)
+                result = glm_model.fit()
+            except:
+                continue
+            pval = list(result.pvalues)
+            # add beta coeff
+            p_values.append([gene] + pval)
+        p_values_df = pd.DataFrame(
+            p_values, columns=['genes', 'const_pval', 'p_value', 'PC1_pval', 'PC2_pvcal', 'PC3_pval']
+        ).sort_values(by=['p_value'])
     else:
         raise Exception("The test you selected is not valid.")
     p_values_df.to_csv(output_file, sep='\t', index=False)

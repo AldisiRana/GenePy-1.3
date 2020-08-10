@@ -312,7 +312,7 @@ def normalize(
 @OUTPUT_PATH
 @click.option('-g', '--genes',
               help="a list containing the genes to calculate. if not provided all genes will be used.")
-@click.option('-t', '--test', required=True, type=click.Choice(['ttest_ind', 'mannwhitneyu', 'logit']),
+@click.option('-t', '--test', required=True, type=click.Choice(['ttest_ind', 'mannwhitneyu', 'logit', 'glm']),
               help='statistical test for calculating P value.')
 @click.option('-c', '--cases-column', required=True, help="the name of the column that contains the case/control type.")
 @click.option('-m', '--samples-column', required=True, help="the name of the column that contains the samples.")
