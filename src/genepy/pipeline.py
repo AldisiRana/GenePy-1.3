@@ -256,7 +256,8 @@ def find_pvalue(
             beta_coef = list(result.params)
             p_values.append([gene] + pval + beta_coef)
         p_values_df = pd.DataFrame(
-            p_values, columns=['genes', 'const_pval', 'p_value', 'PC1_pval', 'PC2_pvcal', 'PC3_pval', 'beta_coef']
+            p_values, columns=['genes', 'const_pval', 'p_value', 'PC1_pval', 'PC2_pvcal', 'PC3_pval', 'beta_coef',
+                               '', '', '', '']
         ).sort_values(by=['p_value'])
     else:
         raise Exception("The test you selected is not valid.")
