@@ -331,7 +331,7 @@ def calculate_pval(
     genotype_file_sep
 ):
     """Calculate the P-value between two given groups."""
-    scores_df = pd.read_csv(scores_file, sep=scores_file_sep, dtype='float32')
+    scores_df = pd.read_csv(scores_file, sep=scores_file_sep)
 
     click.echo("The process for calculating the p_values will start now.")
     df = find_pvalue(
