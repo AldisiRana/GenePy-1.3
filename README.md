@@ -126,7 +126,7 @@ sbatch --array=1-52 subber.sh
 ## Run GenePy as package
 You can also run some of the script of GenePy as a package.
 ### Installation
-``GenePy`` can be installed on python3+ from the latest code on [GitHub](https://github.com/AldisiRana/integra) with:
+``GenePy`` can be installed on python3+ from the latest code on [GitHub](https://github.com/AldisiRana/GenePy-1.3) with:
 
     $ pip install git+https://github.com/AldisiRana/GenePy-1.3.git
 
