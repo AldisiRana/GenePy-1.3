@@ -10,7 +10,7 @@ from functools import partial
 from tqdm import tqdm
 
 from .constants import SCORES_TO_COL_NAMES
-from .pipeline import run_parallel_genes_meta, normalize_gene_len, merge_matrices, find_pvalue, process_annovar, \
+from .pipeline import run_parallel_genes_meta, process_annovar, \
     cadd_scoring, run_parallel_annovar, run_parallel_scoring, annotated_vcf_prcoessing
 from .utils import cross_annotate_cadd, chunks, score_genepy, combine_genotype_annotation, create_genes_list, \
     poolcontext
@@ -247,106 +247,6 @@ def get_genepy_folder(
             if file.endswith('.input') or file.endswith('_multianno.txt'):
                 continue
             os.remove(file)
-
-
-@main.command()
-@click.option('-d', '--directory', required=True, help="The directory that contains the matrices to merge.")
-@click.option('-s', '--file-suffix', default='.tsv', help='The suffix of scores files in directory')
-@OUTPUT_PATH
-@click.option('--samples-col', required=True, multiple=True, help="the name of samples column in matrices")
-@SCORES_COL
-@FILE_SEP
-def merge(
-    *,
-    directory,
-    output_path,
-    samples_col,
-    scores_col,
-    file_sep,
-    file_suffix
-):
-    """This command merges all matrices in a directory into one big matrix"""
-    click.echo("Starting the merging process")
-    merge_matrices(
-        directory=directory,
-        file_suffix=file_suffix,
-        output_path=output_path,
-        scores_col=scores_col,
-        file_sep=file_sep,
-        samples_col=list(samples_col),
-    )
-    click.echo("Merging is done.")
-
-
-@main.command()
-@click.option('-m', '--matrix-file', required=True, help="The scoring matrix to normalize.")
-@click.option('-g', '--genes-lengths-file',
-              help="The file containing the lengths of genes. If not provided it will be produced.")
-@OUTPUT_PATH
-@FILE_SEP
-@click.option('-s', '--samples-col', default='patient_id', help='the name of the samples column')
-def normalize(
-    *,
-    matrix_file,
-    genes_lengths_file=None,
-    output_path=None,
-    file_sep='\t',
-    samples_col
-):
-    """This command normalizes the scoring matrix by gene length."""
-    click.echo("Normalization in process.")
-    normalize_gene_len(
-        matrix_file=matrix_file,
-        file_sep=file_sep,
-        genes_lengths_file=genes_lengths_file,
-        output_path=output_path,
-        samples_col=samples_col
-    )
-
-
-@main.command()
-@click.option('-s', '--scores-file', required=True, help="The scoring file of genes across a population.")
-@click.option('--scores-file-sep', default='\t', help="the seperator for scores files")
-@click.option('-i', '--genotype-file', required=True, help="File containing information about the cohort.")
-@click.option('--genotype-file-sep', default='\t', help="The file separator")
-@OUTPUT_PATH
-@click.option('-g', '--genes',
-              help="a list containing the genes to calculate. if not provided all genes will be used.")
-@click.option('-t', '--test', required=True, type=click.Choice(['ttest_ind', 'mannwhitneyu', 'logit', 'glm']),
-              help='statistical test for calculating P value.')
-@click.option('-c', '--cases-column', required=True, help="the name of the column that contains the case/control type.")
-@click.option('-m', '--samples-column', required=True, help="the name of the column that contains the samples.")
-@click.option('-p', '--pc-file', default=None, help="Principle components values for logistic regression.")
-def calculate_pval(
-    *,
-    scores_file,
-    genotype_file,
-    output_path,
-    genes,
-    cases_column,
-    samples_column,
-    test,
-    pc_file,
-    scores_file_sep,
-    genotype_file_sep
-):
-    """Calculate the P-value between two given groups."""
-    scores_df = pd.read_csv(scores_file, sep=scores_file_sep)
-
-    click.echo("The process for calculating the p_values will start now.")
-    df = find_pvalue(
-        scores_df=scores_df,
-        output_file=output_path,
-        genotype_file=genotype_file,
-        genotype_file_sep=genotype_file_sep,
-        genes=genes,
-        cases_column=cases_column,
-        samples_column=samples_column,
-        test=test,
-        pc_file=pc_file,
-    )
-    click.echo('Process is complete.')
-    click.echo(df.info())
 
 
 @main.command()
